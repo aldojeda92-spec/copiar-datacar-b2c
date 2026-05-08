@@ -29,14 +29,13 @@ export async function POST(req: Request) {
       return [String(val).trim().toLowerCase()];
     };
 
-    // Función auxiliar para ignorar valores de "selección total"
     const isNotAll = (v: string) => !['todas', 'todos', 'cualquiera', 'cualquier', ''].includes(v);
 
     const sTipo = parseData(leadData.tipoVehiculo).filter(isNotAll);
     const sConce = parseData(leadData.concesionariaPreferencia);
     const attrs = parseData(leadData.atributos);
 
-    // 2. DICCIONARIO DE MOTORIZACIÓN (Intocable, traduce UI a Data Técnica)
+    // 2. DICCIONARIO DE MOTORIZACIÓN
     const motorMap: Record<string, string[]> = {
       'hev': ['híbrido', 'hybrid', 'autorrecargable', 'hev', 'mhev'],
       'phev': ['enchufable', 'plug-in', 'phev', 'híbrido enchufable'],
@@ -49,7 +48,6 @@ export async function POST(req: Request) {
     const sMotorRaw = parseData(leadData.motorizacion).filter(isNotAll);
     const sMotorTarget = sMotorRaw.flatMap(m => motorMap[m] || [m]);
 
-    // DICCIONARIO DE ORIGEN (Traductor Frontend -> DB)
     const origenMap: Record<string, string[]> = {
       'solo chinos': ['china', 'chino', 'prc'],
       'solo japoneses': ['japón', 'japon', 'japonés', 'japones'],
@@ -61,11 +59,8 @@ export async function POST(req: Request) {
     const sOrigenRaw = parseData(leadData.origen).filter(isNotAll);
     const sOrigenTarget = sOrigenRaw.flatMap(o => origenMap[o] || [o.replace('solo ', '')]);
 
-    // SANITIZACIÓN DE PRECIOS
     const pMin = Math.floor(Number(leadData.presupuestoMin) || 0);
     const pMax = Math.floor(Number(leadData.presupuestoMax) || 999999);
-
-    console.log(">>> [ARQUITECTURA] Payload Mapeado:", { sTipo, sMotorTarget, sOrigenTarget, pMin, pMax });
 
     // 3. SQL QUIRÚRGICO (HARD FILTERS)
     const queryConditions = [
@@ -89,60 +84,70 @@ export async function POST(req: Request) {
       queryConditions.push(or(...sOrigenTarget.map(o => ilike(catalogoMatriz.origenMarca, `%${o}%`)))!);
     }
 
-    // Ejecución. Si no hay match exacto, devolvemos vacío y el Frontend debe mostrar mensaje de "No hay opciones".
-    const candidatosEstrictos = await db.select().from(catalogoMatriz).where(and(...queryConditions));
+    let candidatosEstrictos = await db.select().from(catalogoMatriz).where(and(...queryConditions));
+
+    // --- LÓGICA DE RESCATE (NUEVA) ---
+    let esRescate = false;
+    let resultadosParaProcesar = candidatosEstrictos;
 
     if (candidatosEstrictos.length === 0) {
-      return NextResponse.json({ success: true, top10: [] });
+      console.log(">>> [RESCATE] No hay resultados exactos. Relajando filtros...");
+      const condicionesRescate = [
+        gte(catalogoMatriz.precioUsd, pMin),
+        lte(catalogoMatriz.precioUsd, pMax)
+      ];
+      if (sTipo.length > 0) {
+        condicionesRescate.push(or(...sTipo.map(t => ilike(catalogoMatriz.tipoCarroceria, `%${t}%`)))!);
+      }
+      // Traemos una muestra más amplia para que el algoritmo de concesionaria pueda ordenar
+      resultadosParaProcesar = await db.select().from(catalogoMatriz).where(and(...condicionesRescate));
+      esRescate = true;
     }
 
-// 4. ALGORITMO DATACAR MATCH SCORE (Scoring Dinámico sobre el 100% de la muestra)
-    
-    // 4.1. Evaluar Concesionaria en TODOS los resultados de la base de datos
-    const candidatosConConcesionaria = candidatosEstrictos.map(auto => {
+    if (resultadosParaProcesar.length === 0) {
+      return NextResponse.json({ success: true, top10: [], esRescate: false });
+    }
+
+    // 4. ALGORITMO DATACAR MATCH SCORE (Scoring Dinámico)
+    const candidatosConConcesionaria = resultadosParaProcesar.map(auto => {
       const dbConce = (auto.concesionaria || "").toLowerCase();
       const isConceMatch = sConce.length === 0 || sConce.some(c => ['todas', 'todos'].includes(c)) || sConce.some(c => dbConce.includes(c));
       return { ...auto, isConceMatch };
     });
 
-    // 4.2. Cálculo de Precios Relativos (Sobre TODO el inventario rescatado)
     const minPrice = Math.min(...candidatosConConcesionaria.map(a => a.precioUsd ?? 0));
     const maxPrice = Math.max(...candidatosConConcesionaria.map(a => a.precioUsd ?? 0));
 
-    // 4.3. Asignación de Puntaje Global (La evaluación real a TODO el stock)
     let candidatosPuntuados = candidatosConConcesionaria.map(auto => {
-      let score = 70; // Base por pasar los hard filters (SQL)
-      
-      if (auto.isConceMatch) score += 15; // Bono Concesionaria / Preferencia
-      
+      let score = 70;
+      if (auto.isConceMatch) score += 15;
       const p = auto.precioUsd ?? 0;
       if (maxPrice === minPrice) {
-        score += 15; // Si todos cuestan igual, todos ganan el bono
+        score += 15;
       } else {
-        // Regla de tres inversa: a menor precio, mayor puntaje (hasta 15)
         score += Math.round(15 * (1 - ((p - minPrice) / (maxPrice - minPrice))));
       }
       return { ...auto, matchPercent: score };
     });
 
-    // 4.4. ORDENAMIENTO ABSOLUTO
-    // Primero los de mayor Match Score (la concesionaria elegida salta arriba), luego el más barato
     candidatosPuntuados.sort((a, b) => b.matchPercent - a.matchPercent || (a.precioUsd ?? 0) - (b.precioUsd ?? 0));
 
-    // 4.5. EXTRACCIÓN DEL TOP 10 (Recorte de modelos únicos YA ORDENADOS)
+    // 4.5. EXTRACCIÓN DEL TOP (10 si es match, 5 si es rescate)
     const vistos = new Set();
     let finalTop = [];
+    const limite = esRescate ? 5 : 10;
+    
     for (const a of candidatosPuntuados) {
-      if (!vistos.has(a.modelo) && finalTop.length < 10) {
+      if (!vistos.has(a.modelo) && finalTop.length < limite) {
         vistos.add(a.modelo);
         finalTop.push(a);
       }
     }
-    // 5. IA: PIPELINE DE DATOS JSON (Análisis Comparativo con Hard-Prompting)
+
+    // 5. IA: PIPELINE DE DATOS (Solo se activa si NO es rescate para mantener veredictos técnicos reales)
     let veredictosArray: any[] = [];
-    if (finalTop.length > 0) {
+    if (finalTop.length > 0 && !esRescate) {
       try {
-        // Enriquecemos el payload con atributos de Neon para que la IA compare
         const aiPayload = finalTop.map((a, index) => ({
           index,
           precio: a.precioUsd,
@@ -154,77 +159,46 @@ export async function POST(req: Request) {
           baulera: a.bauleraLitros
         }));
 
-        // AUDITORÍA PRE-VUELO: Verificamos qué le estamos mandando a Google
-        console.log(`>>> [DEBUG PAYLOAD A GEMINI]: Enviando ${aiPayload.length} vehículos a analizar.`);
+        const prompt = `Actúa como Analista de Datos de DATACAR. Recibirás un JSON con ${finalTop.length} vehículos. TAREA OBLIGATORIA: Escribe un 'veredicto' comparativo de máximo 15 palabras para CADA UNO. REGLAS: 1. NO menciones marcas ni modelos. 2. Compara entre sí. 3. Devuelve ÚNICAMENTE un array JSON: [{"index": 0, "veredicto": "..."}]. Datos: ${JSON.stringify(aiPayload)}`;
 
-        // PROMPT RE-ESTRUCTURADO (Anti-Alucinaciones y Anti-Pereza)
-        const prompt = `Actúa como Analista de Datos de DATACAR.
-        A continuación recibirás un array JSON con ${finalTop.length} vehículos.
-        
-        TAREA OBLIGATORIA: Escribe un 'veredicto' comparativo de máximo 15 palabras para CADA UNO de los vehículos basándote en sus atributos (precio, motor, baulera, plazas, etc.).
-        
-        REGLAS ESTRICTAS:
-        1. NO menciones marcas ni modelos bajo ninguna circunstancia.
-        2. Compara los vehículos entre sí (Ejemplos válidos: "Es la opción más económica del grupo", "Destaca por su baulera líder en capacidad", "El único con tecnología híbrida y ADAS completo").
-        3. DEBES generar exactamente ${finalTop.length} veredictos.
-        
-        Devuelve ÚNICAMENTE un array JSON válido, sin texto adicional, sin markdown y sin bloques de código, con esta estructura exacta:
-        [
-          {"index": <numero_de_index>, "veredicto": "<tu_frase_aqui>"}
-        ]
-        
-        JSON DE VEHÍCULOS A ANALIZAR:
-        ${JSON.stringify(aiPayload)}`;
-
-        const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${process.env.GOOGLE_GENERATIVE_AI_API_KEY}`, {
+        const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GOOGLE_GENERATIVE_AI_API_KEY}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
         const aiData = await aiRes.json();
-        
-        // AUDITORÍA EXTREMA: Si Google no devuelve candidatos, escupimos el error completo
-        if (!aiData.candidates || aiData.candidates.length === 0) {
-          console.error(">>> [FATAL GEMINI API]: La IA no devolvió texto. Objeto completo:", JSON.stringify(aiData, null, 2));
-        }
-        
         const textResponse = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
-        console.log(">>> [RAW IA COMPLETO]:", textResponse); // Ahora vemos la respuesta entera, sin recortar
-        
-        // EXTRACCIÓN AGRESIVA: Buscamos el primer '[' y el último ']'
         const match = textResponse.match(/\[[\s\S]*\]/);
-        
         if (match) {
           veredictosArray = JSON.parse(match[0]);
-          console.log(`>>> [IA JSON PARSED]: ${veredictosArray.length} veredictos extraídos correctamente.`);
-        } else {
-          console.warn(">>> [WARNING IA] No se detectó un array JSON en la respuesta. Fallback activado.");
         }
       } catch (e) {
-        console.error(">>> [ERROR PARSEO IA]:", e);
+        console.error(">>> [ERROR IA]:", e);
       }
     }
 
-    // 6. RESPUESTA FINAL MAPEDA
+    // 6. RESPUESTA FINAL MAPEADA
     const top10 = await Promise.all(finalTop.map(async (auto, i) => {
       const vRaw = await db.query.catalogoMatriz.findMany({
         where: eq(catalogoMatriz.modelo, auto.modelo ?? ""),
         orderBy: [catalogoMatriz.precioUsd]
       });
 
-      // Aseguramos emparejar el veredicto correcto por su índice
       const veredictoObj = veredictosArray.find((v: any) => v.index === i);
 
       return {
         ...auto,
-        match_percent: auto.matchPercent,
-        veredicto: veredictoObj?.veredicto || "Opción destacada que cumple estrictamente con tu configuración y presupuesto.",
-        versiones: vRaw.map(v => ({ ...v, match_percent: auto.matchPercent }))
+        match_percent: esRescate ? 65 : auto.matchPercent, // Bajamos el match score visual si es recomendación
+        esRecomendacion: esRescate,
+        veredicto: esRescate 
+          ? "No encontramos un match exacto, pero esta opción se ajusta a tu presupuesto y tipo de carrocería."
+          : veredictoObj?.veredicto || "Opción destacada que cumple estrictamente con tu configuración y presupuesto.",
+        versiones: vRaw.map(v => ({ ...v, match_percent: esRescate ? 65 : auto.matchPercent }))
       };
     }));
 
-    console.log(`>>> [ARQUITECTURA] Pipeline Completado con Match Dinámico en ${Date.now() - start}ms`);
-    return NextResponse.json({ success: true, top10 });
+    console.log(`>>> [ARQUITECTURA] Pipeline Completado. Rescate: ${esRescate}. Tiempo: ${Date.now() - start}ms`);
+    return NextResponse.json({ success: true, top10, esRescate });
 
   } catch (error: any) {
     console.error(">>> [FATAL ERROR]:", error);
