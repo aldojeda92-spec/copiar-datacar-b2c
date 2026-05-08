@@ -65,4 +65,187 @@ export async function POST(req: Request) {
     const pMin = Math.floor(Number(leadData.presupuestoMin) || 0);
     const pMax = Math.floor(Number(leadData.presupuestoMax) || 999999);
 
-    console.log(">>> [ARQUITECTURA] Payload M
+    console.log(">>> [ARQUITECTURA] Payload Mapeado:", { sTipo, sMotorTarget, sOrigenTarget, pMin, pMax });
+
+    // 3. SQL QUIRÚRGICO (HARD FILTERS)
+    const queryConditions = [
+      gte(catalogoMatriz.precioUsd, pMin),
+      lte(catalogoMatriz.precioUsd, pMax)
+    ];
+
+    if (sTipo.length > 0) {
+      queryConditions.push(or(...sTipo.map(t => ilike(catalogoMatriz.tipoCarroceria, `%${t}%`)))!);
+    }
+
+    if (sMotorTarget.length > 0) {
+      const motorConditions = sMotorTarget.flatMap(m => [
+        ilike(catalogoMatriz.combustible, `%${m}%`),
+        ilike(catalogoMatriz.motor, `%${m}%`)
+      ]);
+      queryConditions.push(or(...motorConditions)!);
+    }
+
+    if (sOrigenTarget.length > 0) {
+      queryConditions.push(or(...sOrigenTarget.map(o => ilike(catalogoMatriz.origenMarca, `%${o}%`)))!);
+    }
+
+    // Ejecución de candidatos estrictos
+    const candidatosEstrictos = await db.select().from(catalogoMatriz).where(and(...queryConditions));
+
+    // --- LÓGICA DE RESCATE (A: Recomendaciones si es imposible) ---
+    let esRescate = false;
+    let resultadosParaProcesar = candidatosEstrictos;
+
+    if (candidatosEstrictos.length === 0) {
+      console.log(">>> [RESCATE] No hay resultados exactos. Relajando filtros (Solo Precio y Carrocería)...");
+      const condicionesRescate = [
+        gte(catalogoMatriz.precioUsd, pMin),
+        lte(catalogoMatriz.precioUsd, pMax)
+      ];
+      
+      if (sTipo.length > 0) {
+        condicionesRescate.push(or(...sTipo.map(t => ilike(catalogoMatriz.tipoCarroceria, `%${t}%`)))!);
+      }
+      
+      resultadosParaProcesar = await db.select().from(catalogoMatriz).where(and(...condicionesRescate));
+      esRescate = true;
+    }
+
+    // Si ni siquiera hay rescates posibles, devolvemos array vacío.
+    if (resultadosParaProcesar.length === 0) {
+      return NextResponse.json({ success: true, top10: [], esRescate: false });
+    }
+
+    // 4. ALGORITMO DATACAR MATCH SCORE (Scoring Dinámico sobre el 100% de la muestra)
+    // 4.1. Evaluar Concesionaria en TODOS los resultados de la base de datos (o del rescate)
+    const candidatosConConcesionaria = resultadosParaProcesar.map(auto => {
+      const dbConce = (auto.concesionaria || "").toLowerCase();
+      const isConceMatch = sConce.length === 0 || sConce.some(c => ['todas', 'todos'].includes(c)) || sConce.some(c => dbConce.includes(c));
+      return { ...auto, isConceMatch };
+    });
+
+    // 4.2. Cálculo de Precios Relativos
+    const minPrice = Math.min(...candidatosConConcesionaria.map(a => a.precioUsd ?? 0));
+    const maxPrice = Math.max(...candidatosConConcesionaria.map(a => a.precioUsd ?? 0));
+
+    // 4.3. Asignación de Puntaje Global
+    let candidatosPuntuados = candidatosConConcesionaria.map(auto => {
+      let score = 70; // Base por pasar los filtros
+      
+      if (auto.isConceMatch) score += 15; // Bono Concesionaria / Preferencia
+      
+      const p = auto.precioUsd ?? 0;
+      if (maxPrice === minPrice) {
+        score += 15; // Si todos cuestan igual, todos ganan el bono
+      } else {
+        score += Math.round(15 * (1 - ((p - minPrice) / (maxPrice - minPrice))));
+      }
+      return { ...auto, matchPercent: score };
+    });
+
+    // 4.4. ORDENAMIENTO ABSOLUTO
+    candidatosPuntuados.sort((a, b) => b.matchPercent - a.matchPercent || (a.precioUsd ?? 0) - (b.precioUsd ?? 0));
+
+    // 4.5. EXTRACCIÓN (10 para match exacto, 5 para recomendaciones)
+    const vistos = new Set();
+    let finalTop = [];
+    const limiteResultados = esRescate ? 5 : 10;
+
+    for (const a of candidatosPuntuados) {
+      if (!vistos.has(a.modelo) && finalTop.length < limiteResultados) {
+        vistos.add(a.modelo);
+        finalTop.push(a);
+      }
+    }
+
+    // 5. IA: PIPELINE DE DATOS JSON (B: Universal para ambos escenarios con modelo exacto pedido)
+    let veredictosArray: any[] = [];
+    if (finalTop.length > 0) {
+      try {
+        const aiPayload = finalTop.map((a, index) => ({
+          index,
+          precio: a.precioUsd,
+          motor: a.combustible,
+          airbags: a.airbags,
+          adas: a.adas ? "Equipado" : "Básico",
+          pantalla: a.tamanhoPantalla,
+          plazas: a.plazas,
+          baulera: a.bauleraLitros
+        }));
+
+        console.log(`>>> [DEBUG PAYLOAD A GEMINI]: Enviando ${aiPayload.length} vehículos a analizar.`);
+
+        const prompt = `Actúa como Analista de Datos de DATACAR.
+        A continuación recibirás un array JSON con ${finalTop.length} vehículos.
+        
+        TAREA OBLIGATORIA: Escribe un 'veredicto' comparativo de máximo 15 palabras para CADA UNO de los vehículos basándote en sus atributos (precio, motor, baulera, plazas, etc.).
+        
+        REGLAS ESTRICTAS:
+        1. NO menciones marcas ni modelos bajo ninguna circunstancia.
+        2. Compara los vehículos entre sí (Ejemplos válidos: "Es la opción más económica del grupo", "Destaca por su baulera líder en capacidad", "El único con tecnología híbrida y ADAS completo").
+        3. DEBES generar exactamente ${finalTop.length} veredictos.
+        
+        Devuelve ÚNICAMENTE un array JSON válido, sin texto adicional, sin markdown y sin bloques de código, con esta estructura exacta:
+        [
+          {"index": <numero_de_index>, "veredicto": "<tu_frase_aqui>"}
+        ]
+        
+        JSON DE VEHÍCULOS A ANALIZAR:
+        ${JSON.stringify(aiPayload)}`;
+
+        // URL exacta solicitada por el usuario
+        const aiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${process.env.GOOGLE_GENERATIVE_AI_API_KEY}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        const aiData = await aiRes.json();
+        
+        if (!aiData.candidates || aiData.candidates.length === 0) {
+          console.error(">>> [FATAL GEMINI API]: La IA no devolvió texto. Objeto completo:", JSON.stringify(aiData, null, 2));
+        }
+        
+        const textResponse = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+        console.log(">>> [RAW IA COMPLETO]:", textResponse);
+        
+        const match = textResponse.match(/\[[\s\S]*\]/);
+        
+        if (match) {
+          veredictosArray = JSON.parse(match[0]);
+          console.log(`>>> [IA JSON PARSED]: ${veredictosArray.length} veredictos extraídos correctamente.`);
+        } else {
+          console.warn(">>> [WARNING IA] No se detectó un array JSON en la respuesta. Fallback activado.");
+        }
+      } catch (e) {
+        console.error(">>> [ERROR PARSEO IA]:", e);
+      }
+    }
+
+    // 6. RESPUESTA FINAL MAPEDA
+    const top10 = await Promise.all(finalTop.map(async (auto, i) => {
+      const vRaw = await db.query.catalogoMatriz.findMany({
+        where: eq(catalogoMatriz.modelo, auto.modelo ?? ""),
+        orderBy: [catalogoMatriz.precioUsd]
+      });
+
+      const veredictoObj = veredictosArray.find((v: any) => v.index === i);
+
+      return {
+        ...auto,
+        match_percent: esRescate ? 65 : auto.matchPercent, // Bajamos visualmente el % si es recomendación
+        esRecomendacion: esRescate, // Flag para tu Frontend
+        veredicto: veredictoObj?.veredicto || (esRescate 
+          ? "Opción recomendada que se ajusta a tu presupuesto y carrocería." 
+          : "Opción destacada que cumple estrictamente con tu configuración y presupuesto."),
+        versiones: vRaw.map(v => ({ ...v, match_percent: esRescate ? 65 : auto.matchPercent }))
+      };
+    }));
+
+    console.log(`>>> [ARQUITECTURA] Pipeline Completado. Rescate: ${esRescate}. Tiempo: ${Date.now() - start}ms`);
+    return NextResponse.json({ success: true, top10, esRescate });
+
+  } catch (error: any) {
+    console.error(">>> [FATAL ERROR]:", error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
