@@ -47,6 +47,8 @@ export default function WizardContainer() {
   const [openFilter, setOpenFilter] = useState<string | null>(null);
   
   const [activeVersions, setActiveVersions] = useState<Record<string, IAAuto>>({});
+  // INYECCIÓN 1: Estado para saber si estamos en modo Smart Discovery (Rescate)
+  const [esRescate, setEsRescate] = useState(false);
 
   const [formData, setFormData] = useState({
     nombre: '', celular: '', email: '', presupuestoMin: 20000, presupuestoMax: 50000,
@@ -105,7 +107,13 @@ export default function WizardContainer() {
           headers: { 'Content-Type': 'application/json' }
         });
         const data = await res.json();
-        if (data.success) { setTop10(data.top10); setStep(2); window.scrollTo(0, 0); }
+        // INYECCIÓN 2: Capturamos el flag 'esRescate' que nos manda el backend
+        if (data.success) { 
+          setTop10(data.top10); 
+          setEsRescate(data.esRescate || false); 
+          setStep(2); 
+          window.scrollTo(0, 0); 
+        }
       }
     } catch (e) { alert("Error de conexión"); } finally { setIsAnalyzing(false); }
   };
@@ -326,6 +334,14 @@ export default function WizardContainer() {
               Motor: {formData.motorizacion.length > 0 ? formData.motorizacion.join(', ') : 'Cualquiera'}
             </p>
           </div>
+
+          {/* INYECCIÓN 3: El aviso visual que SOLO aparece si esRescate es true */}
+          {esRescate && (
+            <div className="w-full bg-orange-100 border-l-4 border-orange-500 p-6 rounded-r-lg shadow-sm">
+              <h3 className="text-orange-800 font-montserrat font-black text-sm uppercase tracking-widest">⚠️ El auto que buscas no lo encontramos</h3>
+              <p className="text-orange-700 text-xs mt-1 font-bold">Pero estas opciones te podrían interesar según tu presupuesto y carrocería:</p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-10">
             {top10.map((auto, idx) => {
