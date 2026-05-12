@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { saveLeadAction, logComparisonAction } from '@/app/actions';
-
+//prueba
 interface IAAuto {
   id: string; 
   puesto: number; 
