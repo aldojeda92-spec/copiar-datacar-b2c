@@ -212,8 +212,8 @@ const isReady = formData.nombre && isCelularValid && formData.atributos.length =
             { label: 'Tapizado en cuero', key: 'asientoCuero' },
             { label: 'Techo / Sunroof', key: 'techoPanoramico' },
             { label: 'Garantía oficial', key: 'garantia' },
-            { label: 'Origen de Marca', key: 'origenMarca' },
-            { label: 'Concesionaria', key: 'concesionaria' }
+            { label: 'Origen de Marca', key: 'origenMarca' }
+           
           ].map((item, idx) => (
             <div key={idx} className={`grid grid-cols-4 gap-1 ${idx % 2 === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
               <div className="p-6 font-black text-[9px] uppercase text-slate-500 flex items-center">{item.label}</div>
