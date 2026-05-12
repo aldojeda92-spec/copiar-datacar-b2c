@@ -60,8 +60,9 @@ export default function WizardContainer() {
     notas: ''
   });
 
-  const isReady = formData.nombre && formData.celular && formData.atributos.length === 3;
-
+ const isCelularValid = formData.celular.startsWith('09') && formData.celular.length === 10;
+const isReady = formData.nombre && isCelularValid && formData.atributos.length === 3;
+  
   const toggleArrayItem = (key: 'motorizacion' | 'tipoVehiculo' | 'origen' | 'concesionaria', value: string) => {
     setFormData(prev => {
       const current = prev[key] as string[];
@@ -254,7 +255,20 @@ export default function WizardContainer() {
               </div>
               <div className="space-y-1">
                 <label className="text-[9px] font-black uppercase text-slate-400">WhatsApp *</label>
-                <input value={formData.celular} onChange={e => setFormData({...formData, celular: e.target.value})} className="w-full p-3 border-b-2 bg-slate-50 outline-none focus:border-[#0A1F33] text-sm" />
+                <input 
+                  type="tel"
+                  placeholder="Ej: 0981234567"
+                  value={formData.celular} 
+                  onChange={e => {
+                    // Filtramos: Solo deja pasar números y recorta a 10 caracteres máximo
+                    const soloNumeros = e.target.value.replace(/\D/g, '').slice(0, 10);
+                    setFormData({...formData, celular: soloNumeros});
+                  }} 
+                  className={`w-full p-3 border-b-2 bg-slate-50 outline-none text-sm transition-colors ${formData.celular.length > 0 && !isCelularValid ? 'border-red-400 focus:border-red-500 text-red-600' : 'focus:border-[#0A1F33]'}`} 
+                />
+                {formData.celular.length > 0 && !isCelularValid && (
+                  <p className="text-[9px] font-bold text-red-500">Debe empezar con 09 y tener 10 dígitos.</p>
+                )}
               </div>
               <div className="space-y-1">
                 <label className="text-[9px] font-black uppercase text-slate-400">Email</label>
