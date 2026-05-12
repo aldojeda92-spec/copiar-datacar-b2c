@@ -267,7 +267,7 @@ const isReady = formData.nombre && isCelularValid && formData.atributos.length =
                   className={`w-full p-3 border-b-2 bg-slate-50 outline-none text-sm transition-colors ${formData.celular.length > 0 && !isCelularValid ? 'border-red-400 focus:border-red-500 text-red-600' : 'focus:border-[#0A1F33]'}`} 
                 />
                 {formData.celular.length > 0 && !isCelularValid && (
-                  <p className="text-[9px] font-bold text-red-500">Debe empezar con 09 y tener 10 dígitos.</p>
+                  <p className="text-[9px] font-bold text-red-500">Debe ser un número de celular válido.</p>
                 )}
               </div>
               <div className="space-y-1">
