@@ -335,7 +335,7 @@ const isReady = formData.nombre && isCelularValid && formData.atributos.length =
               />
               <MultiSelect 
                 label="Concesionaria" 
-                items={['Garden', 'Automotor', 'Santa Rosa', 'Chacomer', 'Toyotoshi', 'Condor', 'Gorostiaga']} 
+                items={['Garden', 'Automotor', 'Santa Rosa', 'Chacomer', 'Toyotoshi', 'Condor', 'Gorostiaga', 'Automaq', 'De La Sobera', 'Vicar', 'Diesa']} 
                 value={formData.concesionaria} 
                 storeKey="concesionaria"
               />
