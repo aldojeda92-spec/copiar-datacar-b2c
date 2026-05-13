@@ -446,7 +446,81 @@ const isReady = formData.nombre && isCelularValid && formData.atributos.length =
               );
             })}
           </div>
+{/* --- INICIO PIE DE PÁGINA: FINANCIACIÓN Y FAQS --- */}
+          <div className="mt-20 border-t-4 border-[#0A1F33] pt-12">
+            <div className="bg-[#0A1F33] text-white p-10 md:p-16 shadow-2xl relative">
+              <h2 className="text-3xl font-montserrat font-black uppercase mb-2">
+                ¿Querés financiar? <span className="text-[#00BFFF]">Nosotros te ayudamos con todo.</span>
+              </h2>
+              <p className="text-slate-400 text-sm mb-10 font-medium max-w-3xl">
+                Sabemos que el papeleo puede ser un dolor de cabeza. Te resumimos los documentos principales que suelen pedir las concesionarias y bancos para que te vayas preparando.
+              </p>
 
+              <div className="space-y-4 max-w-5xl">
+                {/* FAQ 1: Financiación Propia */}
+                <details className="group bg-white/5 border border-white/10 p-6 cursor-pointer hover:bg-white/10 transition-colors">
+                  <summary className="font-black text-sm uppercase tracking-widest text-[#00BFFF] flex justify-between items-center list-none outline-none">
+                    Requisitos: Financiación Propia (Garden, Automotor, etc.)
+                    <span className="text-white group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <div className="mt-6 text-slate-300 text-xs leading-relaxed space-y-2 border-t border-white/10 pt-4">
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li><strong className="text-white">Cédula de Identidad:</strong> Copia de ambos lados. (Si estás casado/a, también del cónyuge).</li>
+                      <li><strong className="text-white">Comprobantes de Ingreso:</strong> 3 últimas liquidaciones de salario (si sos dependiente) o últimas 6 declaraciones de IVA (si sos independiente).</li>
+                      <li><strong className="text-white">Validación de Domicilio:</strong> Factura de ANDE o NIS (no importa que no esté a tu nombre) y ubicación.</li>
+                      <li><strong className="text-white">Respaldos (Opcional pero recomendado):</strong> 3 a 6 últimos extractos bancarios. Si tenés inmuebles o vehículos a tu nombre, adjuntá el título/cédula verde.</li>
+                      <li><strong className="text-white">Referencias:</strong> Personales (nombre y celular) y Comerciales (nombre del comercio).</li>
+                    </ul>
+                    <p className="text-[10px] italic mt-4 opacity-70 text-[#00BFFF]">* Por ley, deberás firmar una autorización para la revisión de tus datos crediticios (Ley Nro 6534/20).</p>
+                  </div>
+                </details>
+
+                {/* FAQ 2: Bancos */}
+                <details className="group bg-white/5 border border-white/10 p-6 cursor-pointer hover:bg-white/10 transition-colors">
+                  <summary className="font-black text-sm uppercase tracking-widest text-[#00BFFF] flex justify-between items-center list-none outline-none">
+                    Requisitos: Préstamos Bancarios
+                    <span className="text-white group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <div className="mt-6 text-slate-300 text-xs leading-relaxed space-y-6 border-t border-white/10 pt-4">
+                    <div>
+                      <h4 className="font-black text-white uppercase text-[11px] mb-2 bg-white/10 inline-block px-2 py-1">Si ya sos cliente del Banco:</h4>
+                      <p>Es rapidísimo. Solo necesitás tu Cédula, la Carta Oferta (Proforma) de la concesionaria, llenar la solicitud vía App/Home Banking y endosar el seguro del vehículo.</p>
+                    </div>
+                    <div>
+                      <h4 className="font-black text-white uppercase text-[11px] mb-2 bg-white/10 inline-block px-2 py-1">Si NO sos cliente (Persona Física):</h4>
+                      <ul className="list-disc pl-5 space-y-2">
+                        <li>Cédula (autenticada o escaneo original) y Carta Oferta.</li>
+                        <li>Factura de servicio público (ANDE, ESSAP, Copaco).</li>
+                        <li><strong className="text-white">Asalariados:</strong> Certificado de trabajo y últimas 3 liquidaciones.</li>
+                        <li><strong className="text-white">Independientes:</strong> Últimos 6 IVA y Certificado de Cumplimiento Tributario (CCT).</li>
+                        <li>2 Referencias personales y 2 comerciales.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </details>
+
+                {/* FAQ 3: Diesa / Vicar */}
+                <details className="group bg-white/5 border border-white/10 p-6 cursor-pointer hover:bg-white/10 transition-colors">
+                  <summary className="font-black text-sm uppercase tracking-widest text-[#00BFFF] flex justify-between items-center list-none outline-none">
+                    Requisitos: Representantes Premium (Diesa / Vicar)
+                    <span className="text-white group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <div className="mt-6 text-slate-300 text-xs leading-relaxed space-y-6 border-t border-white/10 pt-4">
+                    <p className="italic text-slate-400">Suelen pedir una documentación financiera más exhaustiva:</p>
+                    <div>
+                      <h4 className="font-black text-white uppercase text-[11px] mb-2 bg-white/10 inline-block px-2 py-1">Personas Físicas:</h4>
+                      <p>Además de lo básico (Cédula, ANDE, 6 extractos bancarios), exigen Constancia de RUC, CCT, DDJJ de IRP del último año, y si sos independiente, DDJJ de Renta de los últimos 2 años y Patente Comercial.</p>
+                    </div>
+                    <div>
+                      <h4 className="font-black text-white uppercase text-[11px] mb-2 bg-white/10 inline-block px-2 py-1">Empresas (Personas Jurídicas):</h4>
+                      <p>Solicitud sellada, Cédulas de representantes, CCT, 6 últimos IVA, Flujo de caja proyectado, Balances y Estados de Resultado (últimos 2 años), DDJJ IRE, Constitución de Sociedad, Actas de asamblea/directorio y Constancias de Beneficiarios Finales.</p>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            </div>
+          </div>
+          {/* --- FIN PIE DE PÁGINA --- */}
           {compareIds.length >= 1 && (
             <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 bg-[#0A1F33] text-white p-8 shadow-2xl flex items-center gap-10 border-t-4 border-[#00BFFF] rounded-sm animate-in slide-in-from-bottom-10">
               <div className="text-sm font-bold uppercase">{compareIds.length} <span className="text-slate-500 font-light">seleccionados</span></div>
