@@ -177,7 +177,7 @@ const isReady = formData.nombre && isCelularValid && formData.atributos.length =
             <h2 className="text-4xl font-montserrat font-black text-[#0A1F33] uppercase leading-none">Comparativa <span className="text-[#00BFFF]">Datos Duros</span></h2>
             <button onClick={() => setShowComparison(false)} className="bg-[#0A1F33] text-white px-8 py-3 font-black text-[10px] uppercase tracking-widest hover:bg-[#00BFFF] transition-all">← Volver al Ranking</button>
           </div>
-          <div className="grid grid-cols-4 gap-1 border-b">
+          <div className="grid grid-cols-4 gap-1 border-b sticky top-0 z-50 bg-white shadow-md pt-2">
             <div className="bg-slate-50 p-6 flex flex-col justify-end font-black text-[10px] text-slate-400 uppercase tracking-widest">Especificaciones</div>
             {selected.map(auto => {
                const currentAuto = activeVersions[auto.id] || auto;
