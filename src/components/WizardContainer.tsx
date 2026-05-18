@@ -168,30 +168,85 @@ const isReady = formData.nombre && isCelularValid && formData.atributos.length =
     </div>
   );
 
-  if (showComparison) {
+    if (showComparison) {
     const selected = top10.filter(a => compareIds.includes(a.id));
     return (
-            <div className="min-h-screen bg-white p-4 md:p-10 animate-in fade-in duration-500 overflow-x-auto">
-        <div className="max-w-7xl mx-auto space-y-10 min-w-[800px]">
-          <div className="flex justify-between items-end border-b-4 border-[#0A1F33] pb-6">
-            <h2 className="text-4xl font-montserrat font-black text-[#0A1F33] uppercase leading-none">Comparativa <span className="text-[#00BFFF]">Datos Duros</span></h2>
-            <button onClick={() => setShowComparison(false)} className="bg-[#0A1F33] text-white px-8 py-3 font-black text-[10px] uppercase tracking-widest hover:bg-[#00BFFF] transition-all">← Volver al Ranking</button>
+      <div className="min-h-screen bg-white p-4 md:p-10 animate-in fade-in duration-500">
+        <div className="max-w-7xl mx-auto space-y-6 md:space-y-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b-4 border-[#0A1F33] pb-6">
+            <h2 className="text-3xl md:text-4xl font-montserrat font-black text-[#0A1F33] uppercase leading-none">Comparativa <span className="text-[#00BFFF]">Datos Duros</span></h2>
+            <button onClick={() => setShowComparison(false)} className="bg-[#0A1F33] text-white px-6 md:px-8 py-3 font-black text-[10px] uppercase tracking-widest hover:bg-[#00BFFF] transition-all w-full md:w-auto">← Volver al Ranking</button>
           </div>
-          <div className="grid grid-cols-4 gap-1 border-b sticky top-0 z-50 bg-white shadow-md pt-2">
-            <div className="bg-slate-50 p-6 flex flex-col justify-end font-black text-[10px] text-slate-400 uppercase tracking-widest">Especificaciones</div>
-            {selected.map(auto => {
-               const currentAuto = activeVersions[auto.id] || auto;
-               return (
-                <div key={auto.id} className="p-6 text-center space-y-4 bg-white border-x">
-                  <div className="h-32 flex items-center justify-center">
-                    <img src={currentAuto.urlImagen} className="max-h-full object-contain mx-auto" alt={currentAuto.modelo} />
-                  </div>
-                  <h3 className="font-black text-[#0A1F33] uppercase text-sm leading-tight">{currentAuto.marca} <br/> {currentAuto.modelo}</h3>
-                  <p className="text-[#00BFFF] font-black text-xl">${currentAuto.precioUsd.toLocaleString()}</p>
-                  <a href={`https://wa.me/595991244469?text=Me interesa el ${currentAuto.marca} ${currentAuto.modelo} del comparador Datacar.`} target="_blank" className="block w-full py-3 bg-[#0A1F33] text-white text-center font-black text-[9px] uppercase tracking-widest hover:bg-[#00BFFF] transition-all">Quiero Comprar</a>
+          
+          {/* CAJA DE CRISTAL: Scroll independiente para la tabla */}
+          <div className="w-full overflow-auto max-h-[75vh] border-b-2 border-slate-200 shadow-inner rounded-xl relative">
+            <div className="min-w-[900px]">
+              
+              {/* CABECERA PEGAJOSA (Ahora se pega al techo de esta caja) */}
+              <div className="grid grid-cols-4 gap-1 sticky top-0 z-50 bg-white shadow-md border-b-2 border-slate-200 pt-2">
+                <div className="bg-slate-50 p-6 flex flex-col justify-end font-black text-[10px] text-slate-400 uppercase tracking-widest">Especificaciones</div>
+                {selected.map(auto => {
+                   const currentAuto = activeVersions[auto.id] || auto;
+                   return (
+                    <div key={auto.id} className="p-6 text-center space-y-4 bg-white border-x">
+                      <div className="h-28 flex items-center justify-center">
+                        <img src={currentAuto.urlImagen} className="max-h-full object-contain mx-auto" alt={currentAuto.modelo} />
+                      </div>
+                      <h3 className="font-black text-[#0A1F33] uppercase text-sm leading-tight">{currentAuto.marca} <br/> {currentAuto.modelo}</h3>
+                      <p className="text-[#00BFFF] font-black text-lg">${currentAuto.precioUsd.toLocaleString()}</p>
+                      <a href={`https://wa.me/595991244469?text=Me interesa el ${currentAuto.marca} ${currentAuto.modelo} del comparador Datacar.`} target="_blank" className="block w-full py-2 bg-[#0A1F33] text-white text-center font-black text-[9px] uppercase tracking-widest hover:bg-[#00BFFF] transition-all">Quiero Comprar</a>
+                    </div>
+                   );
+                })}
+              </div>
+
+              {/* FILAS DE DATOS */}
+              {[
+                { label: 'Versión', key: 'version' },
+                { label: 'Motorización', key: 'motor' },
+                { label: 'Combustible', key: 'combustible' },
+                { label: 'Transmisión', key: 'transmision' },
+                { label: 'Tracción', key: 'traccion' },
+                { label: 'Seguridad (ADAS)', key: 'adas' },
+                { label: 'Airbags', key: 'airbags' },
+                { label: 'Dimensiones (LxAnxAl)', key: 'dimensiones' },
+                { label: 'Despeje del Suelo', key: 'despejeSuelo' },
+                { label: 'Baulera (Litros)', key: 'bauleraLitros' },
+                { label: 'Capacidad Plazas', key: 'plazas' },
+                { label: 'Infoentretenimiento', key: 'tamanhoPantalla' },
+                { label: 'Conectividad', key: 'conectividad' },
+                { label: 'Sistema de Cámaras', key: 'camaras' },
+                { label: 'Tapizado en cuero', key: 'asientoCuero' },
+                { label: 'Techo / Sunroof', key: 'techoPanoramico' },
+                { label: 'Garantía oficial', key: 'garantia' },
+                { label: 'Origen de Marca', key: 'origenMarca' },
+                { label: 'Concesionaria', key: 'concesionaria' }
+              ].map((item, idx) => (
+                <div key={idx} className={`grid grid-cols-4 gap-1 ${idx % 2 === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
+                  <div className="p-4 md:p-6 font-black text-[9px] uppercase text-slate-500 flex items-center">{item.label}</div>
+                  {selected.map(auto => {
+                    const currentAuto = activeVersions[auto.id] || auto;
+                    return (
+                      <div key={auto.id} className="p-4 md:p-6 text-center text-xs font-bold text-[#0A1F33] flex items-center justify-center border-x">
+                        {item.key === 'dimensiones' 
+                          ? `${currentAuto.largo || '–'}x${currentAuto.ancho || '–'}x${currentAuto.alto || '–'} mm`
+                          : item.key === 'precioUsd' 
+                          ? `$${currentAuto.precioUsd?.toLocaleString()}`
+                          : item.key === 'despejeSuelo' && currentAuto.despejeSuelo
+                          ? `${currentAuto.despejeSuelo} mm`
+                          : (currentAuto as any)[item.key] || '–'}
+                      </div>
+                    );
+                  })}
                 </div>
-               );
-            })}
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
           </div>
 
           {[
