@@ -171,8 +171,8 @@ const isReady = formData.nombre && isCelularValid && formData.atributos.length =
   if (showComparison) {
     const selected = top10.filter(a => compareIds.includes(a.id));
     return (
-      <div className="min-h-screen bg-white p-10 animate-in fade-in duration-500">
-        <div className="max-w-7xl mx-auto space-y-10">
+            <div className="min-h-screen bg-white p-4 md:p-10 animate-in fade-in duration-500 overflow-x-auto">
+        <div className="max-w-7xl mx-auto space-y-10 min-w-[800px]">
           <div className="flex justify-between items-end border-b-4 border-[#0A1F33] pb-6">
             <h2 className="text-4xl font-montserrat font-black text-[#0A1F33] uppercase leading-none">Comparativa <span className="text-[#00BFFF]">Datos Duros</span></h2>
             <button onClick={() => setShowComparison(false)} className="bg-[#0A1F33] text-white px-8 py-3 font-black text-[10px] uppercase tracking-widest hover:bg-[#00BFFF] transition-all">← Volver al Ranking</button>
@@ -262,7 +262,7 @@ const isReady = formData.nombre && isCelularValid && formData.atributos.length =
 
       {step === 1 && (
         <div className="max-w-4xl mx-auto p-12 animate-in fade-in duration-700">
-          <div className="bg-white border border-slate-100 p-12 shadow-2xl space-y-12">
+          <div className="bg-white border border-slate-100 p-6 md:p-12 shadow-2xl space-y-8 md:space-y-12">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="space-y-1">
                 <label className="text-[9px] font-black uppercase text-slate-400">Nombre *</label>
@@ -522,7 +522,7 @@ const isReady = formData.nombre && isCelularValid && formData.atributos.length =
           </div>
           {/* --- FIN PIE DE PÁGINA --- */}
           {compareIds.length >= 1 && (
-            <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 bg-[#0A1F33] text-white p-8 shadow-2xl flex items-center gap-10 border-t-4 border-[#00BFFF] rounded-sm animate-in slide-in-from-bottom-10">
+          <div className="fixed bottom-6 md:bottom-12 left-1/2 -translate-x-1/2 z-50 w-[95%] md:w-auto bg-[#0A1F33] text-white p-4 md:p-8 shadow-2xl flex items-center justify-between md:justify-center md:gap-10 border-t-4 border-[#00BFFF] rounded-sm animate-in slide-in-from-bottom-10">
               <div className="text-sm font-bold uppercase">{compareIds.length} <span className="text-slate-500 font-light">seleccionados</span></div>
               {compareIds.length >= 2 ? (
                 <button onClick={handleOpenComparison} className="bg-[#00BFFF] text-[#0A1F33] px-10 py-4 font-black text-[11px] uppercase tracking-widest hover:bg-white transition-all">Comparar Datos Duros</button>
