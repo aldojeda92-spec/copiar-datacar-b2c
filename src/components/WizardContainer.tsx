@@ -168,7 +168,7 @@ const isReady = formData.nombre && isCelularValid && formData.atributos.length =
     </div>
   );
 
-    if (showComparison) {
+  if (showComparison) {
     const selected = top10.filter(a => compareIds.includes(a.id));
     return (
       <div className="min-h-screen bg-white p-4 md:p-10 animate-in fade-in duration-500">
@@ -209,7 +209,7 @@ const isReady = formData.nombre && isCelularValid && formData.atributos.length =
                 { label: 'Tracción', key: 'traccion' },
                 { label: 'Seguridad (ADAS)', key: 'adas' },
                 { label: 'Airbags', key: 'airbags' },
-                { label: 'Dimensiones (LxAnxAl)', key: 'dimensiones' },
+                { label: 'Dimensiones', key: 'dimensiones' },
                 { label: 'Despeje del Suelo', key: 'despejeSuelo' },
                 { label: 'Baulera (Litros)', key: 'bauleraLitros' },
                 { label: 'Capacidad Plazas', key: 'plazas' },
@@ -219,22 +219,37 @@ const isReady = formData.nombre && isCelularValid && formData.atributos.length =
                 { label: 'Tapizado en cuero', key: 'asientoCuero' },
                 { label: 'Techo / Sunroof', key: 'techoPanoramico' },
                 { label: 'Garantía oficial', key: 'garantia' },
-                { label: 'Origen de Marca', key: 'origenMarca' },
-                { label: 'Concesionaria', key: 'concesionaria' }
+                { label: 'Origen de Marca', key: 'origenMarca' }
+                // Eliminamos deliberadamente la Concesionaria de esta lista
               ].map((item, idx) => (
                 <div key={idx} className={`grid grid-cols-4 gap-1 ${idx % 2 === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
                   <div className="p-4 md:p-6 font-black text-[9px] uppercase text-slate-500 flex items-center">{item.label}</div>
                   {selected.map(auto => {
                     const currentAuto = activeVersions[auto.id] || auto;
+                    
+                    // Extraemos el valor real de la base de datos
+                    let valor = (currentAuto as any)[item.key];
+                    
+                    // Formateos especiales para dimensiones y despeje
+                    if (item.key === 'dimensiones') {
+                      valor = (currentAuto.largo && currentAuto.ancho) ? `${currentAuto.largo}x${currentAuto.ancho}x${currentAuto.alto || ''} mm` : null;
+                    } else if (item.key === 'despejeSuelo') {
+                      valor = currentAuto.despejeSuelo ? `${currentAuto.despejeSuelo} mm` : null;
+                    }
+
+                    // Generamos el link de WhatsApp dinámico para el auto y el dato faltante
+                    const linkWhatsApp = `https://wa.me/595991244469?text=Hola, quiero consultar el dato de *${item.label}* para el vehículo *${currentAuto.marca} ${currentAuto.modelo}* que vi en Datacar.`;
+
                     return (
                       <div key={auto.id} className="p-4 md:p-6 text-center text-xs font-bold text-[#0A1F33] flex items-center justify-center border-x">
-                        {item.key === 'dimensiones' 
-                          ? `${currentAuto.largo || '–'}x${currentAuto.ancho || '–'}x${currentAuto.alto || '–'} mm`
-                          : item.key === 'precioUsd' 
-                          ? `$${currentAuto.precioUsd?.toLocaleString()}`
-                          : item.key === 'despejeSuelo' && currentAuto.despejeSuelo
-                          ? `${currentAuto.despejeSuelo} mm`
-                          : (currentAuto as any)[item.key] || '–'}
+                        {/* Evaluamos si existe el dato. Si NO existe (null, undefined, ''), mostramos el botón de WhatsApp */}
+                        {valor && valor !== '–' && String(valor).trim() !== '' ? (
+                          valor
+                        ) : (
+                          <a href={linkWhatsApp} target="_blank" rel="noopener noreferrer" className="text-[9px] px-3 py-2 bg-[#0A1F33] text-white rounded font-black uppercase tracking-widest hover:bg-[#00BFFF] transition-colors">
+                            Consultar Dato
+                          </a>
+                        )}
                       </div>
                     );
                   })}
@@ -242,67 +257,6 @@ const isReady = formData.nombre && isCelularValid && formData.atributos.length =
               ))}
             </div>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-          </div>
-
-          {[
-            { label: 'Versión', key: 'version' },
-            { label: 'Motorización', key: 'motor' },
-            { label: 'Combustible', key: 'combustible' },
-            { label: 'Transmisión', key: 'transmision' },
-            { label: 'Tracción', key: 'traccion' },
-            { label: 'Seguridad (ADAS)', key: 'adas' },
-            { label: 'Airbags', key: 'airbags' },
-            { label: 'Dimensiones', key: 'dimensiones' },
-            { label: 'Despeje del Suelo', key: 'despejeSuelo' },
-            { label: 'Baulera (Litros)', key: 'bauleraLitros' },
-            { label: 'Capacidad Plazas', key: 'plazas' },
-            { label: 'Infoentretenimiento', key: 'tamanhoPantalla' },
-            { label: 'Conectividad', key: 'conectividad' },
-            { label: 'Sistema de Cámaras', key: 'camaras' },
-            { label: 'Tapizado en cuero', key: 'asientoCuero' },
-            { label: 'Techo / Sunroof', key: 'techoPanoramico' },
-            { label: 'Garantía oficial', key: 'garantia' },
-            { label: 'Origen de Marca', key: 'origenMarca' }
-            // Eliminamos deliberadamente la Concesionaria de esta lista
-          ].map((item, idx) => (
-            <div key={idx} className={`grid grid-cols-4 gap-1 ${idx % 2 === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
-              <div className="p-6 font-black text-[9px] uppercase text-slate-500 flex items-center">{item.label}</div>
-              {selected.map(auto => {
-                const currentAuto = activeVersions[auto.id] || auto;
-                
-                // Extraemos el valor real de la base de datos
-                let valor = (currentAuto as any)[item.key];
-                
-                // Formateos especiales para dimensiones y despeje
-                if (item.key === 'dimensiones') {
-                  valor = (currentAuto.largo && currentAuto.ancho) ? `${currentAuto.largo}x${currentAuto.ancho}x${currentAuto.alto || ''} mm` : null;
-                } else if (item.key === 'despejeSuelo') {
-                  valor = currentAuto.despejeSuelo ? `${currentAuto.despejeSuelo} mm` : null;
-                }
-
-                // Generamos el link de WhatsApp dinámico para el auto y el dato faltante
-                const linkWhatsApp = `https://wa.me/595991244469?text=Hola, quiero consultar el dato de *${item.label}* para el vehículo *${currentAuto.marca} ${currentAuto.modelo}* que vi en Datacar.`;
-
-                return (
-                  <div key={auto.id} className="p-6 text-center text-xs font-bold text-[#0A1F33] flex items-center justify-center border-x">
-                    {/* Evaluamos si existe el dato. Si NO existe (null, undefined, ''), mostramos el botón de WhatsApp */}
-                    {valor && valor !== '–' && String(valor).trim() !== '' ? (
-                      valor
-                    ) : (
-                      <a href={linkWhatsApp} target="_blank" rel="noopener noreferrer" className="text-[9px] px-3 py-2 bg-[#0A1F33] text-white rounded font-black uppercase tracking-widest hover:bg-[#00BFFF] transition-colors">
-                        Consultar Dato
-                      </a>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
         </div>
       </div>
     );
