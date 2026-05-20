@@ -22,18 +22,23 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-   
-      <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18003746499"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'AW-18003746499');
-</script>
-  
       <body className={`${inter.variable} ${montserrat.variable} font-inter bg-slate-50 text-data-charcoal`}>
+        
+        {/* --- INICIO GOOGLE TAG (gtag.js) --- */}
+        <Script 
+          strategy="afterInteractive" 
+          src="https://www.googletagmanager.com/gtag/js?id=AW-18003746499" 
+        />
+        <Script id="google-ads" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'AW-18003746499');
+          `}
+        </Script>
+        {/* --- FIN GOOGLE TAG --- */}
+
         {children}
       </body>
     </html>
