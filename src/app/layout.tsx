@@ -1,3 +1,4 @@
+import Script from 'next/script';
 import './globals.css';
 import { Inter, Montserrat } from 'next/font/google';
 
