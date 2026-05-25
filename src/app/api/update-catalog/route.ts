@@ -52,7 +52,9 @@ export async function GET(request: Request) {
     const csvContent = fs.readFileSync(csvPath, 'utf-8');
     const rows = parseCSV(csvContent);
 
-    let actualizados = 0;
+    // --- BORRÓN Y CUENTA NUEVA: Limpiamos por completo la tabla de Neon ---
+    await pool.query('TRUNCATE TABLE catalogo_matriz CASCADE;');
+
     let insertados = 0;
 
     for (const row of rows) {
@@ -89,57 +91,33 @@ export async function GET(request: Request) {
       const subsegmento = row[27] || null;
       const airbags = row[28] || null;
 
-      // 1. Buscamos si el auto ya existe en la base de datos de Neon
-      const checkQuery = `SELECT id FROM catalogo_matriz WHERE marca = $1 AND modelo = $2 AND version = $3 LIMIT 1`;
-      const checkRes = await pool.query(checkQuery, [marca, modelo, version]);
-
-      if (checkRes.rows.length > 0) {
-        // Si existe, lo actualizamos (Update)
-        const id = checkRes.rows[0].id;
-        const updateQuery = `
-          UPDATE catalogo_matriz SET 
-            concesionaria = $1, tipo_carroceria = $2, precio = $3, combustible = $4,
-            motor = $5, transmision = $6, traccion = $7, largo = $8, ancho = $9,
-            alto = $10, despeje_suelo = $11, baulera = $12, plazas = $13, adas = $14,
-            asiento_cuero = $15, techo_panoramico = $16, tamanho_pantalla = $17,
-            conectividad = $18, camaras = $19, garantia = $20, origen = $21,
-            origen_marca = $22, url_auto = $23, url_imagen = $24, subsegmento = $25, airbags = $26
-          WHERE id = $27
-        `;
-        await pool.query(updateQuery, [
-          concesionaria, tipo_carroceria, precio, combustible, motor, transmision, traccion, largo, ancho,
-          alto, despeje_suelo, baulera, plazas, adas, asiento_cuero, techo_panoramico, tamanho_pantalla,
-          conectividad, camaras, garantia, origen, origen_marca, url_auto, url_imagen, subsegmento, airbags,
-          id
-        ]);
-        actualizados++;
-      } else {
-        // Si no existe, insertamos el auto nuevo (Insert)
-        const insertQuery = `
-          INSERT INTO catalogo_matriz (
-            marca, modelo, version, concesionaria, tipo_carroceria, precio, combustible,
-            motor, transmision, traccion, largo, ancho, alto, despeje_suelo, baulera,
-            plazas, adas, asiento_cuero, techo_panoramico, tamanho_pantalla, conectividad,
-            camaras, garantia, origen, origen_marca, url_auto, url_imagen, subsegmento, airbags
-          ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
-            $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29
-          )
-        `;
-        await pool.query(insertQuery, [
+      // Insertamos el auto de manera directa en la tabla limpia
+      const insertQuery = `
+        INSERT INTO catalogo_matriz (
           marca, modelo, version, concesionaria, tipo_carroceria, precio, combustible,
           motor, transmision, traccion, largo, ancho, alto, despeje_suelo, baulera,
           plazas, adas, asiento_cuero, techo_panoramico, tamanho_pantalla, conectividad,
           camaras, garantia, origen, origen_marca, url_auto, url_imagen, subsegmento, airbags
-        ]);
-        insertados++;
-      }
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
+          $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29
+        )
+      `;
+      
+      await pool.query(insertQuery, [
+        marca, modelo, version, concesionaria, tipo_carroceria, precio, combustible,
+        motor, transmision, traccion, largo, ancho, alto, despeje_suelo, baulera,
+        plazas, adas, asiento_cuero, techo_panoramico, tamanho_pantalla, conectividad,
+        camaras, garantia, origen, origen_marca, url_auto, url_imagen, subsegmento, airbags
+      ]);
+      
+      insertados++;
     }
 
     return NextResponse.json({ 
       success: true, 
-      message: `¡Catálogo sincronizado con éxito!`,
-      detalles: `Se actualizaron ${actualizados} autos y se agregaron ${insertados} autos nuevos.`
+      message: `¡Catálogo sincronizado con éxito (Borrón y cuenta nueva)!`,
+      detalles: `Se vació la base de datos por completo y se cargaron ${insertados} autos frescos desde tu archivo Excel.`
     });
 
   } catch (error: any) {
