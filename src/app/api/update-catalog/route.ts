@@ -12,16 +12,11 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// Función mejorada y ultra-flexible para extraer números de la baulera
+// Extractor de números ultra-potente mediante expresiones regulares (Busca solo los dígitos puros)
 function limpiarNumero(val: any): number {
   if (val === null || val === undefined) return 0;
-  
-  // Limpiamos espacios y quitamos cualquier texto que no sea número
-  const stringVal = val.toString().trim();
-  if (stringVal === '' || stringVal === '-') return 0;
-  
-  const num = parseInt(stringVal.replace(/\D/g, ''));
-  return isNaN(num) ? 0 : num;
+  const match = val.toString().match(/\d+/);
+  return match ? parseInt(match[0], 10) : 0;
 }
 
 export async function GET(request: Request) {
@@ -58,62 +53,113 @@ export async function GET(request: Request) {
     let insertados = 0;
 
     for (const row of results) {
-      if (!row.marca || !row.modelo) continue;
+      // Función interna para buscar las columnas de forma dinámica por aproximación de palabras
+      const findKey = (word: string) => Object.keys(row).find(k => k.toLowerCase().includes(word));
 
-      const concesionaria = row.concesionaria;
-      const marca = row.marca;
-      const modelo = row.modelo;
-      const version = row.version;
-      const tipo_carroceria = row.tipo_carroceria || row.tipo_carrocería;
+      const kMarca = findKey('marca');
+      const kModelo = findKey('modelo');
       
-      const rawPrecio = row.precio_usd || row.precio;
-      const precio_final = parseFloat(rawPrecio) || 0; 
-      
-      const combustible = row.combustible;
-      const motor = row.motor;
-      const transmision = row.transmision || row.transmisión;
-      const traccion = row.traccion || row.tracción;
-      
-      // Procesamos las dimensiones de forma segura (si fallan, quedan en 0)
-      const largo = limpiarNumero(row.largo);
-      const ancho = limpiarNumero(row.ancho);
-      const alto = limpiarNumero(row.alto);
-      const despeje_suelo = limpiarNumero(row.despeje_suelo || row.despeje);
-      
-      // SENSOR DETECTOR DE BAULERA INDESTRUCTIBLE:
-      // Busca en el objeto de forma exhaustiva bajo cualquier variante de nombre
-      const rawBaulera = row.baulera || row.baul_litros || row.baulera_litros || row.baul || row['baulera (litros)'];
-      const baulera_final = limpiarNumero(rawBaulera);
-      
-      const plazas = limpiarNumero(row.plazas) || 5;
-      const adas = row.adas;
-      const asiento_cuero = row.asiento_cuero;
-      const techo_panoramico = row.techo_panoramico || row.techo_panorámico;
-      const tamanho_pantalla = row.tamanho_pantalla || row.tamano_pantalla || row.tamaño_pantalla;
-      const conectividad = row.conectividad;
-      const camaras = row.camaras || row.cámaras;
-      const garantia = row.garantia || row.garantía;
-      const origen = row.origen;
-      const origen_marca = row.origen_marca;
-      const url_auto = row.url_auto;
-      const url_imagen = row.url_imagen;
-      const subsegmento = row.subsegmento || null;
-      const airbags = row.airbags || null;
+      if (!kMarca || !kModelo || !row[kMarca] || !row[kModelo]) continue;
 
-      // SQL de Doble Seguro: Forzamos la baulera numérica en ambos campos de Neon
+      const marca = row[kMarca];
+      const modelo = row[kModelo];
+      
+      const kConcesionaria = findKey('concesionaria');
+      const concesionaria = kConcesionaria ? row[kConcesionaria] : '';
+      
+      const kVersion = findKey('version');
+      const version = kVersion ? row[kVersion] : '';
+      
+      const kCarroceria = findKey('carroceria') || findKey('carrocería');
+      const tipo_carroceria = kCarroceria ? row[kCarroceria] : '';
+      
+      const kPrecio = findKey('precio');
+      const precio_final = kPrecio ? parseFloat(row[kPrecio]) || 0 : 0;
+      
+      const kCombustible = findKey('combustible');
+      const combustible = kCombustible ? row[kCombustible] : '';
+      
+      const kMotor = findKey('motor');
+      const motor = kMotor ? row[kMotor] : '';
+      
+      const kTransmision = findKey('transmision') || findKey('transmisión');
+      const transmision = kTransmision ? row[kTransmision] : '';
+      
+      const kTraccion = findKey('traccion') || findKey('tracción');
+      const traccion = kTraccion ? row[kTraccion] : '';
+      
+      const kLargo = findKey('largo');
+      const largo = kLargo ? limpiarNumero(row[kLargo]) : null;
+      
+      const kAncho = findKey('ancho');
+      const ancho = kAncho ? limpiarNumero(row[kAncho]) : null;
+      
+      const kAlto = findKey('alto');
+      const alto = kAlto ? limpiarNumero(row[kAlto]) : null;
+      
+      const kDespeje = findKey('despeje');
+      const despeje_suelo = kDespeje ? limpiarNumero(row[kDespeje]) : null;
+      
+      // ESCÁNER DINÁMICO DE BAULERA DEFINITIVO (Rastrea y extrae cualquier columna con la palabra 'baul')
+      const kBaulera = findKey('baul');
+      const baulera_final = kBaulera ? limpiarNumero(row[kBaulera]) : 0;
+      
+      const kPlazas = findKey('plazas');
+      const plazas = kPlazas ? limpiarNumero(row[kPlazas]) : 5;
+      
+      const kAdas = findKey('adas');
+      const adas = kAdas ? row[kAdas] : '';
+      
+      const kCuero = findKey('cuero');
+      const asiento_cuero = kCuero ? row[kCuero] : '';
+      
+      const kTecho = findKey('techo');
+      const techo_panoramico = kTecho ? row[kTecho] : '';
+      
+      const kPantalla = findKey('pantalla');
+      const tamanho_pantalla = kPantalla ? row[kPantalla] : '';
+      
+      const kConectividad = findKey('conectividad');
+      const conectividad = kConectividad ? row[kConectividad] : '';
+      
+      const kCamaras = findKey('camaras') || findKey('cámaras');
+      const camaras = kCamaras ? row[kCamaras] : '';
+      
+      const kGarantia = findKey('garantia') || findKey('garantía');
+      const garantia = kGarantia ? row[kGarantia] : '';
+      
+      const kOrigen = findKey('origen');
+      const origen = kOrigen ? row[kOrigen] : '';
+      
+      const kOrigenMarca = findKey('origen_marca');
+      const origen_marca = kOrigenMarca ? row[kOrigenMarca] : '';
+      
+      const kUrlAuto = findKey('url_auto');
+      const url_auto = kUrlAuto ? row[kUrlAuto] : '';
+      
+      const kUrlImagen = findKey('url_imagen');
+      const url_imagen = kUrlImagen ? row[kUrlImagen] : '';
+      
+      const kSubsegmento = findKey('subsegmento');
+      const subsegmento = kSubsegmento ? row[kSubsegmento] : null;
+      
+      const kAirbags = findKey('airbags');
+      const airbags = kAirbags ? row[kAirbags] : null;
+
+      // SQL unificado: Forzamos el almacenamiento duplicado en "baulera" y "baulera_litros"
       const insertQuery = `
         INSERT INTO catalogo_matriz (
           marca, modelo, version, concesionaria, tipo_carroceria, 
           precio, precio_usd, 
           combustible, motor, transmision, traccion, largo, ancho, alto, despeje_suelo, 
-          baulera, baulera_litros, -- <--- Ambas columnas reciben los litros procesados
+          baulera, baulera_litros, 
           plazas, adas, asiento_cuero, techo_panoramico, tamanho_pantalla, conectividad,
           camaras, garantia, origen, origen_marca, url_auto, url_imagen, subsegmento, airbags
         ) VALUES (
           $1, $2, $3, $4, $5, 
           $6, $7, 
           $8, $9, $10, $11, $12, $13, $14, $15, 
-          $16, $17, -- <--- Enlazamos baulera_final para ambas posiciones
+          $16, $17, 
           $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31
         )
       `;
@@ -122,7 +168,7 @@ export async function GET(request: Request) {
         marca, modelo, version, concesionaria, tipo_carroceria, 
         precio_final, precio_final, 
         combustible, motor, transmision, traccion, largo, ancho, alto, despeje_suelo, 
-        baulera_final, baulera_final, // Inyectamos el valor purificado en las dos columnas
+        baulera_final, baulera_final, 
         plazas, adas, asiento_cuero, techo_panoramico, tamanho_pantalla, conectividad,
         camaras, garantia, origen, origen_marca, url_auto, url_imagen, subsegmento, airbags
       ]);
@@ -132,8 +178,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ 
       success: true, 
-      message: `¡Catálogo sincronizado con éxito total (Doble Seguro + Baulera Fix)!`,
-      detalles: `Se cargaron ${insertados} autos. Precios y Litros de baulera unificados al 100%.`
+      message: `¡Catálogo sincronizado con éxito total (Doble Seguro + Escáner Dinámico)!`,
+      detalles: `Se cargaron ${insertados} autos. Columnas duplicadas y litros de baulera corregidos al 100%.`
     });
 
   } catch (error: any) {
