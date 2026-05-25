@@ -12,6 +12,12 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+function limpiarNumero(val: any): number | null {
+  if (val === null || val === undefined) return null;
+  const num = parseInt(val.toString().replace(/\D/g, ''));
+  return isNaN(num) ? null : num;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const secret = searchParams.get('secret');
@@ -33,7 +39,6 @@ export async function GET(request: Request) {
     const results: any[] = [];
     const fileStream = fs.createReadStream(csvPath, 'utf-8');
 
-    // Mapeamos las cabeceras para limpiar espacios y pasarlas a minúsculas
     await new Promise((resolve, reject) => {
       fileStream
         .pipe(csv({
@@ -55,20 +60,25 @@ export async function GET(request: Request) {
       const version = row.version;
       const tipo_carroceria = row.tipo_carroceria || row.tipo_carrocería;
       
-      // SENSOR INTELIGENTE: Detecta tanto "precio" como "precio_usd" sin importar cuál uses
+      // Captura el precio del Excel (sea cual sea su nombre)
       const rawPrecio = row.precio_usd || row.precio;
-      const precio_usd = parseFloat(rawPrecio) || 0; 
+      const precio_final = parseFloat(rawPrecio) || 0; 
       
       const combustible = row.combustible;
       const motor = row.motor;
       const transmision = row.transmision || row.transmisión;
       const traccion = row.traccion || row.tracción;
-      const largo = parseInt(row.largo) || null;
-      const ancho = parseInt(row.ancho) || null;
-      const alto = parseInt(row.alto) || null;
-      const despeje_suelo = parseInt(row.despeje_suelo) || null;
-      const baulera = parseInt(row.baulera) || null;
-      const plazas = parseInt(row.plazas) || 5;
+      
+      const largo = limpiarNumero(row.largo);
+      const ancho = limpiarNumero(row.ancho);
+      const alto = limpiarNumero(row.alto);
+      const despeje_suelo = limpiarNumero(row.despeje_suelo || row.despeje);
+      
+      // Captura los litros de baulera
+      const rawBaulera = row.baulera || row.baul_litros || row.baulera_litros || row.baul;
+      const baulera_final = limpiarNumero(rawBaulera);
+      
+      const plazas = limpiarNumero(row.plazas) || 5;
       const adas = row.adas;
       const asiento_cuero = row.asiento_cuero;
       const techo_panoramico = row.techo_panoramico || row.techo_panorámico;
@@ -83,21 +93,29 @@ export async function GET(request: Request) {
       const subsegmento = row.subsegmento || null;
       const airbags = row.airbags || null;
 
+      // SQL SOLUCIÓN: Inyectamos el mismo dato en precio/precio_usd y baulera/baulera_litros
       const insertQuery = `
         INSERT INTO catalogo_matriz (
-          marca, modelo, version, concesionaria, tipo_carroceria, precio_usd, combustible,
-          motor, transmision, traccion, largo, ancho, alto, despeje_suelo, baulera,
+          marca, modelo, version, concesionaria, tipo_carroceria, 
+          precio, precio_usd, -- <--- Ambos reciben el precio
+          combustible, motor, transmision, traccion, largo, ancho, alto, despeje_suelo, 
+          baulera, baulera_litros, -- <--- Ambos reciben los litros
           plazas, adas, asiento_cuero, techo_panoramico, tamanho_pantalla, conectividad,
           camaras, garantia, origen, origen_marca, url_auto, url_imagen, subsegmento, airbags
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
-          $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29
+          $1, $2, $3, $4, $5, 
+          $6, $7, -- <--- Enlazamos precio_final en ambos
+          $8, $9, $10, $11, $12, $13, $14, $15, 
+          $16, $17, -- <--- Enlazamos baulera_final en ambos
+          $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31
         )
       `;
       
       await pool.query(insertQuery, [
-        marca, modelo, version, concesionaria, tipo_carroceria, precio_usd, combustible,
-        motor, transmision, traccion, largo, ancho, alto, despeje_suelo, baulera,
+        marca, modelo, version, concesionaria, tipo_carroceria, 
+        precio_final, precio_final, // Mismo valor para precio y precio_usd
+        combustible, motor, transmision, traccion, largo, ancho, alto, despeje_suelo, 
+        baulera_final, baulera_final, // Mismo valor para baulera y baulera_litros
         plazas, adas, asiento_cuero, techo_panoramico, tamanho_pantalla, conectividad,
         camaras, garantia, origen, origen_marca, url_auto, url_imagen, subsegmento, airbags
       ]);
@@ -107,8 +125,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ 
       success: true, 
-      message: `¡Catálogo sincronizado con éxito total!`,
-      detalles: `Se limpió la base de datos y se cargaron ${insertados} autos con sus precios reales en USD.`
+      message: `¡Catálogo sincronizado con éxito total (Doble Seguro)!`,
+      detalles: `Se cargaron ${insertados} autos. Columnas duplicadas alineadas correctamente.`
     });
 
   } catch (error: any) {
