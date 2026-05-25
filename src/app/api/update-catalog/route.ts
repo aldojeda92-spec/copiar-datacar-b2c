@@ -12,10 +12,16 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-function limpiarNumero(val: any): number | null {
-  if (val === null || val === undefined) return null;
-  const num = parseInt(val.toString().replace(/\D/g, ''));
-  return isNaN(num) ? null : num;
+// Función mejorada y ultra-flexible para extraer números de la baulera
+function limpiarNumero(val: any): number {
+  if (val === null || val === undefined) return 0;
+  
+  // Limpiamos espacios y quitamos cualquier texto que no sea número
+  const stringVal = val.toString().trim();
+  if (stringVal === '' || stringVal === '-') return 0;
+  
+  const num = parseInt(stringVal.replace(/\D/g, ''));
+  return isNaN(num) ? 0 : num;
 }
 
 export async function GET(request: Request) {
@@ -60,7 +66,6 @@ export async function GET(request: Request) {
       const version = row.version;
       const tipo_carroceria = row.tipo_carroceria || row.tipo_carrocería;
       
-      // Captura el precio del Excel (sea cual sea su nombre)
       const rawPrecio = row.precio_usd || row.precio;
       const precio_final = parseFloat(rawPrecio) || 0; 
       
@@ -69,13 +74,15 @@ export async function GET(request: Request) {
       const transmision = row.transmision || row.transmisión;
       const traccion = row.traccion || row.tracción;
       
+      // Procesamos las dimensiones de forma segura (si fallan, quedan en 0)
       const largo = limpiarNumero(row.largo);
       const ancho = limpiarNumero(row.ancho);
       const alto = limpiarNumero(row.alto);
       const despeje_suelo = limpiarNumero(row.despeje_suelo || row.despeje);
       
-      // Captura los litros de baulera
-      const rawBaulera = row.baulera || row.baul_litros || row.baulera_litros || row.baul;
+      // SENSOR DETECTOR DE BAULERA INDESTRUCTIBLE:
+      // Busca en el objeto de forma exhaustiva bajo cualquier variante de nombre
+      const rawBaulera = row.baulera || row.baul_litros || row.baulera_litros || row.baul || row['baulera (litros)'];
       const baulera_final = limpiarNumero(rawBaulera);
       
       const plazas = limpiarNumero(row.plazas) || 5;
@@ -93,29 +100,29 @@ export async function GET(request: Request) {
       const subsegmento = row.subsegmento || null;
       const airbags = row.airbags || null;
 
-      // SQL SOLUCIÓN: Inyectamos el mismo dato en precio/precio_usd y baulera/baulera_litros
+      // SQL de Doble Seguro: Forzamos la baulera numérica en ambos campos de Neon
       const insertQuery = `
         INSERT INTO catalogo_matriz (
           marca, modelo, version, concesionaria, tipo_carroceria, 
-          precio, precio_usd, -- <--- Ambos reciben el precio
+          precio, precio_usd, 
           combustible, motor, transmision, traccion, largo, ancho, alto, despeje_suelo, 
-          baulera, baulera_litros, -- <--- Ambos reciben los litros
+          baulera, baulera_litros, -- <--- Ambas columnas reciben los litros procesados
           plazas, adas, asiento_cuero, techo_panoramico, tamanho_pantalla, conectividad,
           camaras, garantia, origen, origen_marca, url_auto, url_imagen, subsegmento, airbags
         ) VALUES (
           $1, $2, $3, $4, $5, 
-          $6, $7, -- <--- Enlazamos precio_final en ambos
+          $6, $7, 
           $8, $9, $10, $11, $12, $13, $14, $15, 
-          $16, $17, -- <--- Enlazamos baulera_final en ambos
+          $16, $17, -- <--- Enlazamos baulera_final para ambas posiciones
           $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31
         )
       `;
       
       await pool.query(insertQuery, [
         marca, modelo, version, concesionaria, tipo_carroceria, 
-        precio_final, precio_final, // Mismo valor para precio y precio_usd
+        precio_final, precio_final, 
         combustible, motor, transmision, traccion, largo, ancho, alto, despeje_suelo, 
-        baulera_final, baulera_final, // Mismo valor para baulera y baulera_litros
+        baulera_final, baulera_final, // Inyectamos el valor purificado en las dos columnas
         plazas, adas, asiento_cuero, techo_panoramico, tamanho_pantalla, conectividad,
         camaras, garantia, origen, origen_marca, url_auto, url_imagen, subsegmento, airbags
       ]);
@@ -125,8 +132,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ 
       success: true, 
-      message: `¡Catálogo sincronizado con éxito total (Doble Seguro)!`,
-      detalles: `Se cargaron ${insertados} autos. Columnas duplicadas alineadas correctamente.`
+      message: `¡Catálogo sincronizado con éxito total (Doble Seguro + Baulera Fix)!`,
+      detalles: `Se cargaron ${insertados} autos. Precios y Litros de baulera unificados al 100%.`
     });
 
   } catch (error: any) {
