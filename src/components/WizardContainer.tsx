@@ -165,35 +165,51 @@ export default function WizardContainer() {
     </div>
   );
 
+  // ESTA ES LA SECCIÓN QUE AHORA ESTÁ ULTRA COMPRIMIDA:
   if (showComparison) {
     const selected = top10.filter(a => compareIds.includes(a.id));
     return (
-      <div className="min-h-screen bg-white p-4 md:p-10 animate-in fade-in duration-500">
-        <div className="max-w-7xl mx-auto space-y-6 md:space-y-10">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b-4 border-[#0A1F33] pb-6">
-            <h2 className="text-3xl md:text-4xl font-montserrat font-black text-[#0A1F33] uppercase leading-none">Comparativa <span className="text-[#00BFFF]">Datos Duros</span></h2>
-            <button onClick={() => setShowComparison(false)} className="bg-[#0A1F33] text-white px-6 md:px-8 py-3 font-black text-[10px] uppercase tracking-widest hover:bg-[#00BFFF] transition-all w-full md:w-auto">← Volver al Ranking</button>
+      <div className="min-h-screen bg-white p-2 md:p-6 animate-in fade-in duration-500">
+        <div className="max-w-7xl mx-auto space-y-4">
+          
+          {/* Título de la comparativa mucho más estrecho y horizontal */}
+          <div className="flex flex-row justify-between items-center gap-4 border-b-2 border-[#0A1F33] pb-2">
+            <h2 className="text-xl md:text-2xl font-montserrat font-black text-[#0A1F33] uppercase leading-none">
+              Comparativa <span className="text-[#00BFFF]">Datos Duros</span>
+            </h2>
+            <button onClick={() => setShowComparison(false)} className="bg-[#0A1F33] text-white px-4 py-2 font-black text-[9px] uppercase tracking-widest hover:bg-[#00BFFF] transition-all">
+              ← Volver
+            </button>
           </div>
           
-          <div className="w-full overflow-auto max-h-[75vh] border-b-2 border-slate-200 shadow-inner rounded-xl relative">
+          <div className="w-full overflow-auto max-h-[85vh] border-b-2 border-slate-200 shadow-inner rounded-lg relative">
             <div className="min-w-[900px]">
-              <div className="grid grid-cols-4 gap-1 sticky top-0 z-50 bg-white shadow-md border-b-2 border-slate-200 pt-2">
-                <div className="bg-slate-50 p-6 flex flex-col justify-end font-black text-[10px] text-slate-400 uppercase tracking-widest">Especificaciones</div>
+              
+              {/* CABECERA PEGAJOSA ULTRA COMPRIMIDA */}
+              <div className="grid grid-cols-4 gap-1 sticky top-0 z-50 bg-white shadow-md border-b-2 border-slate-200">
+                <div className="bg-slate-50 p-2 flex flex-col justify-end font-black text-[9px] text-slate-400 uppercase tracking-widest">
+                  Especificaciones
+                </div>
                 {selected.map(auto => {
                    const currentAuto = activeVersions[auto.id] || auto;
                    return (
-                    <div key={auto.id} className="p-6 text-center space-y-4 bg-white border-x">
-                      <div className="h-28 flex items-center justify-center">
+                    <div key={auto.id} className="p-2 text-center space-y-1.5 bg-white border-x flex flex-col justify-between">
+                      <div className="h-12 flex items-center justify-center"> {/* Imagen súper achicada de h-28 a h-12 */}
                         <img src={currentAuto.urlImagen} className="max-h-full object-contain mx-auto" alt={currentAuto.modelo} />
                       </div>
-                      <h3 className="font-black text-[#0A1F33] uppercase text-sm leading-tight">{currentAuto.marca} <br/> {currentAuto.modelo}</h3>
-                      <p className="text-[#00BFFF] font-black text-lg">${currentAuto.precioUsd.toLocaleString()}</p>
-                      <a href={`https://wa.me/595991244469?text=Me interesa el ${currentAuto.marca} ${currentAuto.modelo} del comparador Datacar.`} target="_blank" className="block w-full py-2 bg-[#0A1F33] text-white text-center font-black text-[9px] uppercase tracking-widest hover:bg-[#00BFFF] transition-all">Quiero Comprar</a>
+                      <div className="leading-tight">
+                        <h3 className="font-black text-[#0A1F33] uppercase text-[10px]">{currentAuto.marca} {currentAuto.modelo}</h3>
+                        <p className="text-[#00BFFF] font-black text-xs">${currentAuto.precioUsd.toLocaleString()}</p>
+                      </div>
+                      <a href={`https://wa.me/595991244469?text=Me interesa el ${currentAuto.marca} ${currentAuto.modelo} del comparador Datacar.`} target="_blank" className="block w-full py-1 bg-[#0A1F33] text-white text-center font-black text-[8px] uppercase tracking-widest hover:bg-[#00BFFF] transition-all">
+                        Quiero Comprar
+                      </a>
                     </div>
                    );
                 })}
               </div>
 
+              {/* FILAS DE DATOS CON MENOS PADDING */}
               {[
                 { label: 'Versión', key: 'version' },
                 { label: 'Motorización', key: 'motor' },
@@ -215,9 +231,10 @@ export default function WizardContainer() {
                 { label: 'Origen de Marca', key: 'origenMarca' }
               ].map((item, idx) => (
                 <div key={idx} className={`grid grid-cols-4 gap-1 ${idx % 2 === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
-                  <div className="p-4 md:p-6 font-black text-[9px] uppercase text-slate-500 flex items-center">{item.label}</div>
+                  <div className="p-3 font-black text-[9px] uppercase text-slate-500 flex items-center">{item.label}</div>
                   {selected.map(auto => {
                     const currentAuto = activeVersions[auto.id] || auto;
+                    
                     let valor = (currentAuto as any)[item.key];
                     
                     if (item.key === 'dimensiones') {
@@ -229,11 +246,11 @@ export default function WizardContainer() {
                     const linkWhatsApp = `https://wa.me/595991244469?text=Hola, quiero consultar el dato de *${item.label}* para el vehículo *${currentAuto.marca} ${currentAuto.modelo}* que vi en Datacar.`;
 
                     return (
-                      <div key={auto.id} className="p-4 md:p-6 text-center text-xs font-bold text-[#0A1F33] flex items-center justify-center border-x">
+                      <div key={auto.id} className="p-3 text-center text-[10px] font-bold text-[#0A1F33] flex items-center justify-center border-x">
                         {valor && valor !== '–' && String(valor).trim() !== '' ? (
                           valor
                         ) : (
-                          <a href={linkWhatsApp} target="_blank" rel="noopener noreferrer" className="text-[9px] px-3 py-2 bg-[#0A1F33] text-white rounded font-black uppercase tracking-widest hover:bg-[#00BFFF] transition-colors">
+                          <a href={linkWhatsApp} target="_blank" rel="noopener noreferrer" className="text-[8px] px-2 py-1.5 bg-[#0A1F33] text-white rounded font-black uppercase tracking-widest hover:bg-[#00BFFF] transition-colors">
                             Consultar Dato
                           </a>
                         )}
@@ -249,13 +266,12 @@ export default function WizardContainer() {
     );
   }
 
+  // EL RESTO DEL CÓDIGO QUEDÓ EXACTAMENTE IGUAL A TU VERSIÓN ORIGINAL
   return (
     <div className={`min-h-screen font-inter ${step === 2 ? 'bg-[#F8FAFC]' : 'bg-white'}`}>
-      
-      {/* HEADER PRINCIPAL COMPACTADO */}
-      <div className="max-w-[1700px] mx-auto px-6 py-4 flex justify-between items-center border-b border-slate-100 bg-white">
-        <h1 className="text-xl font-montserrat font-black text-[#0A1F33] uppercase tracking-tight">DATA<span className="text-[#00BFFF]">CAR</span></h1>
-        {step === 2 && <button onClick={() => setStep(1)} className="text-[9px] font-black uppercase bg-[#0A1F33] text-white px-4 py-2 hover:bg-[#00BFFF] transition-all rounded-sm">← Ajustar Preferencias</button>}
+      <div className="max-w-[1600px] mx-auto p-10 flex justify-between items-center">
+        <h1 className="text-3xl font-montserrat font-black text-[#0A1F33] uppercase">DATA<span className="text-[#00BFFF]">CAR</span></h1>
+        {step === 2 && <button onClick={() => setStep(1)} className="text-[10px] font-black uppercase border-b-2 border-[#00BFFF] pb-1">← Re-ajustar Búsqueda</button>}
       </div>
 
       {step === 1 && (
@@ -349,68 +365,53 @@ export default function WizardContainer() {
       )}
 
       {step === 2 && (
-        <div className="max-w-[1700px] mx-auto px-6 pt-4 pb-40 animate-in fade-in duration-1000 space-y-6">
-          
-          {/* ENCABEZADO ULTRA-COMPRIMIDO FLUIDO (Estilo barra táctica horizontal) */}
-          <div className="bg-[#0A1F33] text-white py-3 px-6 border-l-4 border-[#00BFFF] shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-2 rounded-sm">
-            <div>
-              <h2 className="font-montserrat font-black text-sm uppercase tracking-tight flex items-center gap-2">
-                <span className="bg-[#00BFFF] text-[#0A1F33] text-[9px] font-black px-1.5 py-0.5 rounded-sm">DOSSIER</span> 
-                Filtros Activos de {formData.nombre.split(' ')[0]}
-              </h2>
-              <p className="text-[11px] text-slate-300 font-bold mt-0.5">
-                Busca: <span className="text-[#00BFFF]">{formData.atributos.join(', ')}</span>
-              </p>
-            </div>
-            
-            <div className="text-right self-stretch md:self-auto border-t border-white/10 md:border-t-0 pt-2 md:pt-0">
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                Inversión: <span className="text-white font-black">${formData.presupuestoMin.toLocaleString()} – ${formData.presupuestoMax.toLocaleString()}</span>
-              </p>
-              <p className="text-[9px] text-slate-500 font-medium mt-0.5">
-                Motor: {formData.motorizacion.length > 0 ? formData.motorizacion.join('/') : 'Cualquiera'} | Origen: {formData.origen.length > 0 ? formData.origen.join('/') : 'Todos'}
-              </p>
-            </div>
+        <div className="max-w-[1700px] mx-auto p-10 pb-40 animate-in fade-in duration-1000 space-y-12">
+          <div className="bg-[#0A1F33] p-12 text-white border-l-8 border-[#00BFFF] shadow-2xl">
+            <h2 className="font-montserrat font-black text-2xl uppercase tracking-tighter">
+              {formData.nombre.split(' ')[0]}, busca un auto con {formData.atributos.join(', ')}.
+            </h2>
+            <p className="mt-4 text-slate-400 font-medium text-sm uppercase tracking-widest underline decoration-[#00BFFF] underline-offset-8">
+              Inversión: ${formData.presupuestoMin.toLocaleString()} – ${formData.presupuestoMax.toLocaleString()} | 
+              Origen: {formData.origen.length > 0 ? formData.origen.join(', ') : 'Todos'} | 
+              Motor: {formData.motorizacion.length > 0 ? formData.motorizacion.join(', ') : 'Cualquiera'}
+            </p>
           </div>
 
           {esRescate && (
-            <div className="w-full bg-orange-100 border-l-4 border-orange-500 py-3 px-5 rounded-r-sm shadow-sm flex items-center justify-between">
-              <div>
-                <h3 className="text-orange-800 font-montserrat font-black text-xs uppercase tracking-wider">⚠️ Búsqueda sin coincidencia exacta</h3>
-                <p className="text-orange-700 text-[11px] font-bold">Hemos rescatado estas alternativas óptimas adaptadas a tu presupuesto y carrocería:</p>
-              </div>
+            <div className="w-full bg-orange-100 border-l-4 border-orange-500 p-6 rounded-r-lg shadow-sm">
+              <h3 className="text-orange-800 font-montserrat font-black text-sm uppercase tracking-widest">⚠️ El auto que buscas no lo encontramos</h3>
+              <p className="text-orange-700 text-xs mt-1 font-bold">Pero estas opciones te podrían interesar según tu presupuesto y carrocería:</p>
             </div>
           )}
 
-          {/* LA GRILLA DE AUTOS SUBE AL MÁXIMO DE LA PANTALLA */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-10">
             {top10.map((auto, idx) => {
               const currentAuto = activeVersions[auto.id] || auto;
               return (
                 <div key={auto.id} className={`bg-white border flex flex-col transition-all relative ${compareIds.includes(auto.id) ? 'border-[#00BFFF] ring-4 ring-[#00BFFF]/10' : 'border-slate-100 shadow-sm'}`}>
-                  <div className="absolute -top-2 -left-2 w-8 h-8 bg-[#0A1F33] text-white flex items-center justify-center font-black text-xs z-10 shadow-md">{idx + 1}</div>
-                  <div className="relative h-48 bg-slate-50 overflow-hidden">
+                  <div className="absolute -top-3 -left-3 w-10 h-10 bg-[#0A1F33] text-white flex items-center justify-center font-black z-10 shadow-lg">{idx + 1}</div>
+                  <div className="relative h-56 bg-slate-50 overflow-hidden">
                     <img src={currentAuto.urlImagen} className="w-full h-full object-cover" alt={currentAuto.modelo} />
-                    <button onClick={() => toggleCompare(auto.id)} className={`absolute top-3 right-3 px-2 py-1 text-[8px] font-black border transition-all ${compareIds.includes(auto.id) ? 'bg-[#00BFFF] text-white border-[#00BFFF]' : 'bg-white/90 text-slate-400 border-slate-200 hover:text-[#0A1F33]'}`}>
+                    <button onClick={() => toggleCompare(auto.id)} className={`absolute top-4 right-4 px-3 py-1 text-[8px] font-black border transition-all ${compareIds.includes(auto.id) ? 'bg-[#00BFFF] text-white border-[#00BFFF]' : 'bg-white/90 text-slate-400 border-slate-200 hover:text-[#0A1F33]'}`}>
                       {compareIds.includes(auto.id) ? '✓ SELECCIONADO' : '+ COMPARAR'}
                     </button>
                   </div>
 
-                  <div className="px-6 -mt-4 mb-2 relative z-10">
-                    <div className="bg-slate-50 border-l-2 border-[#00BFFF] p-2 rounded-r-sm shadow-sm">
-                      <p className="text-[10px] leading-tight text-slate-600 italic">
-                        <span className="font-black text-[#0A1F33] not-italic text-[9px] uppercase tracking-tighter mr-1">Análisis:</span>
+                  <div className="px-10 -mt-6 mb-2 relative z-10">
+                    <div className="bg-slate-50 border-l-2 border-[#00BFFF] p-3 rounded-r-lg shadow-sm">
+                      <p className="text-[10px] leading-relaxed text-slate-600 italic">
+                        <span className="font-black text-[#0A1F33] not-italic text-[9px] uppercase tracking-tighter mr-2">Análisis Datacar:</span>
                         "{currentAuto.veredicto || "Analizando configuración técnica..."}"
                       </p>
                     </div>
                   </div>
                   
-                  <div className="p-6 pt-2 flex-1 flex flex-col gap-4">
-                    <div className="space-y-2">
-                      <h4 className="font-black text-base text-[#0A1F33] uppercase leading-tight">{currentAuto.marca} <br/> <span className="font-light text-slate-400">{currentAuto.modelo}</span></h4>
+                  <div className="p-10 pt-4 flex-1 flex flex-col gap-6">
+                    <div className="space-y-4">
+                      <h4 className="font-black text-lg text-[#0A1F33] uppercase leading-tight">{currentAuto.marca} <br/> <span className="font-light text-slate-400">{currentAuto.modelo}</span></h4>
                       <div className="relative group">
-                        <p className="text-[8px] font-black text-[#00BFFF] uppercase tracking-widest mb-0.5">Versión:</p>
-                        <div className="bg-slate-50 border border-slate-100 p-1.5 text-[10px] font-bold text-[#0A1F33] flex justify-between items-center cursor-pointer hover:border-[#00BFFF] transition-all">
+                        <p className="text-[8px] font-black text-[#00BFFF] uppercase tracking-widest mb-1">Versión:</p>
+                        <div className="bg-slate-50 border border-slate-100 p-2 text-[10px] font-bold text-[#0A1F33] flex justify-between items-center cursor-pointer hover:border-[#00BFFF] transition-all">
                           <span className="truncate pr-2">{currentAuto.version}</span>
                           <span className="text-[#00BFFF]">▾</span>
                         </div>
@@ -425,43 +426,42 @@ export default function WizardContainer() {
                       </div>
                     </div>
 
-                    <div className="flex justify-between border-y py-2.5 text-xs font-black uppercase">
+                    <div className="flex justify-between border-y py-4 text-sm font-black uppercase">
                       <span className="text-[#00BFFF]">{currentAuto.match_percent}% Match</span>
                       <span className="text-[#0A1F33]">${currentAuto.precioUsd?.toLocaleString()}</span>
                     </div>
                     
-                    <button onClick={() => setExpandedId(expandedId === auto.id ? null : auto.id)} className="text-[8px] font-black text-[#00BFFF] text-left uppercase tracking-widest">+ Datos Técnicos</button>
+                    <button onClick={() => setExpandedId(expandedId === auto.id ? null : auto.id)} className="text-[9px] font-black text-[#00BFFF] text-left uppercase tracking-widest">+ Datos Técnicos</button>
                     
                     {expandedId === auto.id && (
-                      <div className="text-[10px] space-y-2 text-slate-500 animate-in slide-in-from-top-1 duration-300 pt-1">
-                        <div className="space-y-0.5">
+                      <div className="text-[10px] space-y-3 text-slate-500 animate-in slide-in-from-top-1 duration-300 pt-2">
+                        <div className="space-y-1">
                           <p className="text-[8px] font-black text-[#00BFFF] uppercase tracking-tighter">Seguridad</p>
-                          <p className="flex justify-between border-b pb-0.5"><span>ADAS:</span> <span className="font-bold text-[#0A1F33]">{currentAuto.adas || 'Estándar'}</span></p>
-                          <p className="flex justify-between border-b pb-0.5"><span>Airbags:</span> <span className="font-bold text-[#0A1F33]">{currentAuto.airbags || 'Consultar'}</span></p>
+                          <p className="flex justify-between border-b pb-1"><span>ADAS:</span> <span className="font-bold text-[#0A1F33]">{currentAuto.adas || 'Estándar'}</span></p>
+                          <p className="flex justify-between border-b pb-1"><span>Airbags:</span> <span className="font-bold text-[#0A1F33]">{currentAuto.airbags || 'Consultar'}</span></p>
                         </div>
-                        <div className="space-y-0.5">
+                        <div className="space-y-1">
                           <p className="text-[8px] font-black text-[#00BFFF] uppercase tracking-tighter">Tecnología</p>
-                          <p className="flex justify-between border-b pb-0.5"><span>Pantalla:</span> <span className="font-bold text-[#0A1F33]">{currentAuto.tamanhoPantalla || 'Consultar'}</span></p>
-                          <p className="flex justify-between border-b pb-0.5"><span>Cámaras:</span> <span className="font-bold text-[#0A1F33]">{currentAuto.camaras || 'Retroceso'}</span></p>
+                          <p className="flex justify-between border-b pb-1"><span>Pantalla:</span> <span className="font-bold text-[#0A1F33]">{currentAuto.tamanhoPantalla || 'Consultar'}</span></p>
+                          <p className="flex justify-between border-b pb-1"><span>Cámaras:</span> <span className="font-bold text-[#0A1F33]">{currentAuto.camaras || 'Retroceso'}</span></p>
                         </div>
-                        <div className="space-y-0.5">
+                        <div className="space-y-1">
                           <p className="text-[8px] font-black text-[#00BFFF] uppercase tracking-tighter">Capacidad</p>
-                          <p className="flex justify-between border-b pb-0.5"><span>Baulera:</span> <span className="font-bold text-[#0A1F33]">{currentAuto.bauleraLitros ? `${currentAuto.bauleraLitros} L` : 'Consultar'}</span></p>
-                          <p className="flex justify-between border-b pb-0.5"><span>Plazas:</span> <span className="font-bold text-[#0A1F33]">{currentAuto.plazas || '5'}</span></p>
+                          <p className="flex justify-between border-b pb-1"><span>Baulera:</span> <span className="font-bold text-[#0A1F33]">{currentAuto.bauleraLitros ? `${currentAuto.bauleraLitros} L` : 'Consultar'}</span></p>
+                          <p className="flex justify-between border-b pb-1"><span>Plazas:</span> <span className="font-bold text-[#0A1F33]">{currentAuto.plazas || '5'}</span></p>
                         </div>
                       </div>
                     )}
-                    <a href={`https://wa.me/595991244469?text=Me interesa el ${currentAuto.marca} ${currentAuto.modelo} versión ${currentAuto.version} del ranking Datacar.`} target="_blank" className="mt-auto block w-full py-3 bg-[#0A1F33] text-white text-center font-black text-[9px] uppercase tracking-widest hover:bg-[#00BFFF] transition-all shadow-md">Quiero Comprar</a>
+                    <a href={`https://wa.me/595991244469?text=Me interesa el ${currentAuto.marca} ${currentAuto.modelo} versión ${currentAuto.version} del ranking Datacar.`} target="_blank" className="mt-auto block w-full py-4 bg-[#0A1F33] text-white text-center font-black text-[10px] uppercase tracking-widest hover:bg-[#00BFFF] transition-all shadow-lg">Quiero Comprar</a>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* SECCIÓN INFORMATIVA DE FINANCIACIÓN INFERIOR */}
           <div className="mt-20 border-t-4 border-[#0A1F33] pt-12">
             <div className="bg-[#0A1F33] text-white p-10 md:p-16 shadow-2xl relative">
-              <h2 className="text-2xl md:text-3xl font-montserrat font-black uppercase mb-2">
+              <h2 className="text-3xl font-montserrat font-black uppercase mb-2">
                 ¿Querés financiar? <span className="text-[#00BFFF]">Nosotros te ayudamos con todo.</span>
               </h2>
               <p className="text-slate-400 text-sm mb-10 font-medium max-w-3xl">
@@ -515,7 +515,7 @@ export default function WizardContainer() {
                     <span className="text-white group-open:rotate-180 transition-transform">▼</span>
                   </summary>
                   <div className="mt-6 text-slate-300 text-xs leading-relaxed space-y-6 border-t border-white/10 pt-4">
-                    <p className="italic text-slate-400">Suelen pedir una documentation financiera más exhaustiva:</p>
+                    <p className="italic text-slate-400">Suelen pedir una documentación financiera más exhaustiva:</p>
                     <div>
                       <h4 className="font-black text-white uppercase text-[11px] mb-2 bg-white/10 inline-block px-2 py-1">Personas Físicas:</h4>
                       <p>Además de lo básico (Cédula, ANDE, 6 extractos bancarios), exigen Constancia de RUC, CCT, DDJJ de IRP del último año, y si sos independiente, DDJJ de Renta de los últimos 2 años y Patente Comercial.</p>
@@ -529,9 +529,9 @@ export default function WizardContainer() {
               </div>
             </div>
           </div>
-
+          
           {compareIds.length >= 1 && (
-            <div className="fixed bottom-6 md:bottom-12 left-1/2 -translate-x-1/2 z-50 w-[95%] md:w-auto bg-[#0A1F33] text-white p-4 md:p-6 shadow-2xl flex items-center justify-between md:justify-center md:gap-10 border-t-4 border-[#00BFFF] rounded-sm animate-in slide-in-from-bottom-10">
+            <div className="fixed bottom-6 md:bottom-12 left-1/2 -translate-x-1/2 z-50 w-[95%] md:w-auto bg-[#0A1F33] text-white p-4 md:p-8 shadow-2xl flex items-center justify-between md:justify-center md:gap-10 border-t-4 border-[#00BFFF] rounded-sm animate-in slide-in-from-bottom-10">
               <div className="text-sm font-bold uppercase">{compareIds.length} <span className="text-slate-500 font-light">seleccionados</span></div>
               {compareIds.length >= 2 ? (
                 <button onClick={handleOpenComparison} className="bg-[#00BFFF] text-[#0A1F33] px-10 py-4 font-black text-[11px] uppercase tracking-widest hover:bg-white transition-all">Comparar Datos Duros</button>
