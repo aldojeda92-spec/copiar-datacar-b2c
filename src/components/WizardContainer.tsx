@@ -646,7 +646,7 @@ export default function WizardContainer() {
                     <div className="bg-slate-50 border-l-2 border-[#00BFFF] p-3 rounded-r-lg shadow-sm">
                       <p className="text-[10px] leading-relaxed text-slate-600 italic">
                         <span className="font-black text-[#0A1F33] not-italic text-[9px] uppercase tracking-tighter mr-2">Análisis Datacar:</span>
-                        "{currentAuto.veredicto || (auto.puesto ? "Analizando configuración técnica..." : "Vehículo agregado manualmente por el usuario.")}"
+                        "{currentAuto.veredicto || (auto.puesto ? "Analizando configuración técnica..." : "Opción a medida: Vehículo incorporado para análisis comparativo bajo necesidad específica tuya.")}"
                       </p>
                     </div>
                   </div>
