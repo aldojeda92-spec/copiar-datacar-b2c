@@ -22,8 +22,6 @@ export async function GET(request: Request) {
 
     const searchTerm = `%${q.trim()}%`;
 
-    // SOLUCIÓN INDESTRUCTIBLE: SELECT * trae todo lo que existe en la tabla actualmente.
-    // Ordenamos por precio_usd tal como queríamos.
     const query = `
       SELECT *
       FROM catalogo_matriz
@@ -34,15 +32,14 @@ export async function GET(request: Request) {
     
     const res = await pool.query(query, [searchTerm]);
     
-    // Mapeamos los datos crudos a la estructura que necesita tu Frontend
-    const autos = res.rows.map(row => ({
+    // AQUÍ ESTÁ LA CORRECCIÓN: (row: any)
+    const autos = res.rows.map((row: any) => ({
       id: row.id,
       puesto: 0, 
       match_percent: 99, 
       marca: row.marca ?? 'Desconocida',
       modelo: row.modelo ?? 'Sin Modelo',
       version: row.version ?? 'STD',
-      // Priorizamos precio_usd, y si por algún motivo no viene, usamos precio
       precioUsd: Number(row.precio_usd) || Number(row.precio) || 0,
       origenMarca: row.origen_marca ?? 'No especificado',
       combustible: row.combustible ?? '',
@@ -50,7 +47,6 @@ export async function GET(request: Request) {
       motor: row.motor ?? '',
       traccion: row.traccion ?? '',
       transmision: row.transmision ?? '',
-      // Priorizamos baulera_litros
       bauleraLitros: Number(row.baulera_litros) || parseInt(row.baulera || '0', 10) || 0,
       garantia: row.garantia ?? '',
       adas: row.adas ?? '',
