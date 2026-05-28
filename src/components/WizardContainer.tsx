@@ -36,6 +36,11 @@ interface IAAuto {
   versiones: any[];
 }
 
+// ============================================================================
+// 🔴 INTERRUPTOR MAESTRO: Cambia a 'true' para volver a pedir datos del usuario
+// ============================================================================
+const PEDIR_DATOS_USUARIO = false; 
+
 export default function WizardContainer() {
   const [step, setStep] = useState(1);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -49,8 +54,18 @@ export default function WizardContainer() {
   const [activeVersions, setActiveVersions] = useState<Record<string, IAAuto>>({});
   const [esRescate, setEsRescate] = useState(false);
 
+  // NUEVOS ESTADOS PARA EL BUSCADOR PREDICTIVO ADICIONAL
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<IAAuto[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [manualSelections, setManualSelections] = useState<IAAuto[]>([]);
+
   const [formData, setFormData] = useState({
-    nombre: '', celular: '', email: '', presupuestoMin: 20000, presupuestoMax: 50000,
+    nombre: PEDIR_DATOS_USUARIO ? '' : 'Invitado', 
+    celular: PEDIR_DATOS_USUARIO ? '' : '0999999999', 
+    email: '', 
+    presupuestoMin: 20000, 
+    presupuestoMax: 50000,
     atributos: [] as string[], 
     motorizacion: [] as string[], 
     tipoVehiculo: [] as string[],
@@ -59,8 +74,13 @@ export default function WizardContainer() {
     notas: ''
   });
 
-  const isCelularValid = formData.celular.startsWith('09') && formData.celular.length === 10;
-  const isReady = formData.nombre && isCelularValid && formData.atributos.length === 3;
+  const isCelularValid = PEDIR_DATOS_USUARIO 
+    ? formData.celular.startsWith('09') && formData.celular.length === 10
+    : true; 
+
+  const isReady = PEDIR_DATOS_USUARIO
+    ? formData.nombre && isCelularValid && formData.atributos.length === 3
+    : formData.atributos.length === 3; 
   
   const toggleArrayItem = (key: 'motorizacion' | 'tipoVehiculo' | 'origen' | 'concesionaria', value: string) => {
     setFormData(prev => {
@@ -118,7 +138,7 @@ export default function WizardContainer() {
   };
 
   const handleOpenComparison = async () => {
-    const selected = top10.filter(a => compareIds.includes(a.id));
+    const selected = displayedAutos.filter(a => compareIds.includes(a.id));
     const nombres = selected.map(a => `${a.marca} ${a.modelo}`).join(' vs ');
     const leadIdToUse = currentLeadId || localStorage.getItem('datacar_lead_id');
     if (leadIdToUse && compareIds.length >= 2) {
@@ -127,6 +147,34 @@ export default function WizardContainer() {
     setShowComparison(true);
     window.scrollTo(0, 0);
   };
+
+  // EFECTO DEL BUSCADOR PREDICTIVO (Se dispara cuando el usuario tipea)
+  useEffect(() => {
+    if (searchTerm.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    const delayFn = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await fetch(`/api/search-autos?q=${encodeURIComponent(searchTerm)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(data.autos || []);
+        }
+      } catch (e) {
+        console.error("Error al buscar autos", e);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400); // 400ms de espera antes de buscar para no saturar la BD
+    return () => clearTimeout(delayFn);
+  }, [searchTerm]);
+
+  // UNIFICACIÓN DE AUTOS: Une el Top 10 de la IA con los agregados manualmente y evita duplicados
+  const displayedAutos = [...manualSelections, ...top10].filter((auto, index, self) =>
+    index === self.findIndex((a) => a.id === auto.id)
+  );
 
   const MultiSelect = ({ label, items, value, storeKey }: { label: string, items: string[], value: string[], storeKey: any }) => (
     <div className="space-y-1 relative">
@@ -165,14 +213,12 @@ export default function WizardContainer() {
     </div>
   );
 
-  // ESTA ES LA SECCIÓN QUE AHORA ESTÁ ULTRA COMPRIMIDA:
   if (showComparison) {
-    const selected = top10.filter(a => compareIds.includes(a.id));
+    const selected = displayedAutos.filter(a => compareIds.includes(a.id));
     return (
       <div className="min-h-screen bg-white p-2 md:p-6 animate-in fade-in duration-500">
         <div className="max-w-7xl mx-auto space-y-4">
           
-          {/* Título de la comparativa mucho más estrecho y horizontal */}
           <div className="flex flex-row justify-between items-center gap-4 border-b-2 border-[#0A1F33] pb-2">
             <h2 className="text-xl md:text-2xl font-montserrat font-black text-[#0A1F33] uppercase leading-none">
               Comparativa <span className="text-[#00BFFF]">Datos Duros</span>
@@ -185,7 +231,6 @@ export default function WizardContainer() {
           <div className="w-full overflow-auto max-h-[85vh] border-b-2 border-slate-200 shadow-inner rounded-lg relative">
             <div className="min-w-[900px]">
               
-              {/* CABECERA PEGAJOSA ULTRA COMPRIMIDA */}
               <div className="grid grid-cols-4 gap-1 sticky top-0 z-50 bg-white shadow-md border-b-2 border-slate-200">
                 <div className="bg-slate-50 p-2 flex flex-col justify-end font-black text-[9px] text-slate-400 uppercase tracking-widest">
                   Especificaciones
@@ -194,7 +239,7 @@ export default function WizardContainer() {
                    const currentAuto = activeVersions[auto.id] || auto;
                    return (
                     <div key={auto.id} className="p-2 text-center space-y-1.5 bg-white border-x flex flex-col justify-between">
-                      <div className="h-12 flex items-center justify-center"> {/* Imagen súper achicada de h-28 a h-12 */}
+                      <div className="h-12 flex items-center justify-center"> 
                         <img src={currentAuto.urlImagen} className="max-h-full object-contain mx-auto" alt={currentAuto.modelo} />
                       </div>
                       <div className="leading-tight">
@@ -209,7 +254,6 @@ export default function WizardContainer() {
                 })}
               </div>
 
-              {/* FILAS DE DATOS CON MENOS PADDING */}
               {[
                 { label: 'Versión', key: 'version' },
                 { label: 'Motorización', key: 'motor' },
@@ -266,7 +310,6 @@ export default function WizardContainer() {
     );
   }
 
-  // EL RESTO DEL CÓDIGO QUEDÓ EXACTAMENTE IGUAL A TU VERSIÓN ORIGINAL
   return (
     <div className={`min-h-screen font-inter ${step === 2 ? 'bg-[#F8FAFC]' : 'bg-white'}`}>
       <div className="max-w-[1600px] mx-auto p-10 flex justify-between items-center">
@@ -277,32 +320,35 @@ export default function WizardContainer() {
       {step === 1 && (
         <div className="max-w-4xl mx-auto p-12 animate-in fade-in duration-700">
           <div className="bg-white border border-slate-100 p-6 md:p-12 shadow-2xl space-y-8 md:space-y-12">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="space-y-1">
-                <label className="text-[9px] font-black uppercase text-slate-400">Nombre *</label>
-                <input value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} className="w-full p-3 border-b-2 bg-slate-50 outline-none focus:border-[#0A1F33] text-sm" />
+            
+            {PEDIR_DATOS_USUARIO && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400">Nombre *</label>
+                  <input value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} className="w-full p-3 border-b-2 bg-slate-50 outline-none focus:border-[#0A1F33] text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400">WhatsApp *</label>
+                  <input 
+                    type="tel"
+                    placeholder="Ej: 0981234567"
+                    value={formData.celular} 
+                    onChange={e => {
+                      const soloNumeros = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setFormData({...formData, celular: soloNumeros});
+                    }} 
+                    className={`w-full p-3 border-b-2 bg-slate-50 outline-none text-sm transition-colors ${formData.celular.length > 0 && !isCelularValid ? 'border-red-400 focus:border-red-500 text-red-600' : 'focus:border-[#0A1F33]'}`} 
+                  />
+                  {formData.celular.length > 0 && !isCelularValid && (
+                    <p className="text-[9px] font-bold text-red-500">Debe ser un número de celular válido.</p>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400">Email</label>
+                  <input value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full p-3 border-b-2 bg-slate-50 outline-none focus:border-[#0A1F33] text-sm" />
+                </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-[9px] font-black uppercase text-slate-400">WhatsApp *</label>
-                <input 
-                  type="tel"
-                  placeholder="Ej: 0981234567"
-                  value={formData.celular} 
-                  onChange={e => {
-                    const soloNumeros = e.target.value.replace(/\D/g, '').slice(0, 10);
-                    setFormData({...formData, celular: soloNumeros});
-                  }} 
-                  className={`w-full p-3 border-b-2 bg-slate-50 outline-none text-sm transition-colors ${formData.celular.length > 0 && !isCelularValid ? 'border-red-400 focus:border-red-500 text-red-600' : 'focus:border-[#0A1F33]'}`} 
-                />
-                {formData.celular.length > 0 && !isCelularValid && (
-                  <p className="text-[9px] font-bold text-red-500">Debe ser un número de celular válido.</p>
-                )}
-              </div>
-              <div className="space-y-1">
-                <label className="text-[9px] font-black uppercase text-slate-400">Email</label>
-                <input value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full p-3 border-b-2 bg-slate-50 outline-none focus:border-[#0A1F33] text-sm" />
-              </div>
-            </div>
+            )}
 
             <div className="space-y-10">
               <div className="flex justify-between items-center">
@@ -319,7 +365,7 @@ export default function WizardContainer() {
             </div>
 
             <div className="space-y-4">
-              <label className="text-[9px] font-black uppercase text-slate-400">Seleccioná tres cosas que debe tener tu próximo 0km *</label>
+              <label className="text-[9px] font-black uppercase text-slate-400">Atributos Críticos (Seleccionar 3) *</label>
               <div className="flex flex-wrap gap-2">
                 {['Seguridad', 'Tecnología', 'Espacio', 'Precio', 'Eficiencia'].map(at => (
                   <button key={at} onClick={() => toggleAtributo(at)} className={`px-6 py-2 text-[10px] font-black border-2 transition-all ${formData.atributos.includes(at) ? 'bg-[#0A1F33] text-white border-[#0A1F33]' : 'text-slate-300 border-slate-100 hover:border-slate-200'}`}>{at}</button>
@@ -368,7 +414,9 @@ export default function WizardContainer() {
         <div className="max-w-[1700px] mx-auto p-10 pb-40 animate-in fade-in duration-1000 space-y-12">
           <div className="bg-[#0A1F33] p-12 text-white border-l-8 border-[#00BFFF] shadow-2xl">
             <h2 className="font-montserrat font-black text-2xl uppercase tracking-tighter">
-              {formData.nombre.split(' ')[0]}, busca un auto con {formData.atributos.join(', ')}.
+              {PEDIR_DATOS_USUARIO 
+                ? `${formData.nombre.split(' ')[0]}, busca un auto con ${formData.atributos.join(', ')}.` 
+                : `Buscás un auto con ${formData.atributos.join(', ')}.`}
             </h2>
             <p className="mt-4 text-slate-400 font-medium text-sm uppercase tracking-widest underline decoration-[#00BFFF] underline-offset-8">
               Inversión: ${formData.presupuestoMin.toLocaleString()} – ${formData.presupuestoMax.toLocaleString()} | 
@@ -384,12 +432,74 @@ export default function WizardContainer() {
             </div>
           )}
 
+          {/* =========================================================
+              BARRA DE BÚSQUEDA PREDICTIVA PARA AÑADIR AUTOS MANUALMENTE
+              ========================================================= */}
+          <div className="relative z-30">
+            <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block tracking-widest">
+              ¿Falta algún modelo? Buscalo y agregalo a la comparativa:
+            </label>
+            <input
+              type="text"
+              placeholder="Ej: Toyota Corolla, Kia Sportage..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full p-4 border-2 border-slate-100 bg-white outline-none focus:border-[#00BFFF] text-sm font-bold text-[#0A1F33] transition-colors shadow-sm"
+            />
+            
+            {/* Dropdown predictivo de resultados */}
+            {searchTerm.length >= 2 && (
+              <div className="absolute top-full left-0 w-full bg-white border-2 border-slate-100 shadow-2xl mt-1 max-h-60 overflow-y-auto z-50">
+                {isSearching ? (
+                  <div className="p-4 text-xs font-bold text-slate-400 uppercase text-center animate-pulse">Buscando en el catálogo...</div>
+                ) : searchResults.length > 0 ? (
+                  searchResults.map(auto => (
+                    <div 
+                      key={auto.id} 
+                      onClick={() => {
+                        // 1. Lo agregamos al arreglo manual para que aparezca en la grilla
+                        if (!manualSelections.find(a => a.id === auto.id) && !top10.find(a => a.id === auto.id)) {
+                          setManualSelections(prev => [auto, ...prev]);
+                        }
+                        // 2. Lo tildamos automáticamente para la comparativa (máximo 3)
+                        if (!compareIds.includes(auto.id) && compareIds.length < 3) {
+                          setCompareIds(prev => [...prev, auto.id]);
+                        } else if (!compareIds.includes(auto.id)) {
+                          alert("Solo puedes comparar hasta 3 vehículos a la vez. Deselecciona uno de la grilla primero.");
+                        }
+                        setSearchTerm('');
+                        setSearchResults([]);
+                      }}
+                      className="p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer flex justify-between items-center transition-colors"
+                    >
+                      <div>
+                        <span className="font-black text-[#0A1F33] uppercase">{auto.marca} {auto.modelo}</span>
+                        <span className="text-[10px] text-slate-400 ml-2 font-bold">{auto.version}</span>
+                      </div>
+                      <span className="text-[#00BFFF] font-black text-xs">${auto.precioUsd?.toLocaleString()}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-xs font-bold text-slate-400 uppercase text-center">No se encontraron resultados para "{searchTerm}"</div>
+                )}
+              </div>
+            )}
+          </div>
+          {/* ========================================================= */}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-10">
-            {top10.map((auto, idx) => {
+            {/* AHORA MAPEAMOS SOBRE "displayedAutos" (Top 10 + Búsquedas) */}
+            {displayedAutos.map((auto, idx) => {
               const currentAuto = activeVersions[auto.id] || auto;
               return (
                 <div key={auto.id} className={`bg-white border flex flex-col transition-all relative ${compareIds.includes(auto.id) ? 'border-[#00BFFF] ring-4 ring-[#00BFFF]/10' : 'border-slate-100 shadow-sm'}`}>
-                  <div className="absolute -top-3 -left-3 w-10 h-10 bg-[#0A1F33] text-white flex items-center justify-center font-black z-10 shadow-lg">{idx + 1}</div>
+                  {/* Etiqueta de "Agregado Manualmente" o el número de puesto */}
+                  {auto.puesto ? (
+                    <div className="absolute -top-3 -left-3 w-10 h-10 bg-[#0A1F33] text-white flex items-center justify-center font-black z-10 shadow-lg">{auto.puesto}</div>
+                  ) : (
+                    <div className="absolute -top-3 -left-3 w-10 h-10 bg-[#00BFFF] text-white flex items-center justify-center font-black z-10 shadow-lg text-lg">+</div>
+                  )}
+
                   <div className="relative h-56 bg-slate-50 overflow-hidden">
                     <img src={currentAuto.urlImagen} className="w-full h-full object-cover" alt={currentAuto.modelo} />
                     <button onClick={() => toggleCompare(auto.id)} className={`absolute top-4 right-4 px-3 py-1 text-[8px] font-black border transition-all ${compareIds.includes(auto.id) ? 'bg-[#00BFFF] text-white border-[#00BFFF]' : 'bg-white/90 text-slate-400 border-slate-200 hover:text-[#0A1F33]'}`}>
@@ -401,7 +511,7 @@ export default function WizardContainer() {
                     <div className="bg-slate-50 border-l-2 border-[#00BFFF] p-3 rounded-r-lg shadow-sm">
                       <p className="text-[10px] leading-relaxed text-slate-600 italic">
                         <span className="font-black text-[#0A1F33] not-italic text-[9px] uppercase tracking-tighter mr-2">Análisis Datacar:</span>
-                        "{currentAuto.veredicto || "Analizando configuración técnica..."}"
+                        "{currentAuto.veredicto || (auto.puesto ? "Analizando configuración técnica..." : "Vehículo agregado manualmente por el usuario.")}"
                       </p>
                     </div>
                   </div>
@@ -427,7 +537,7 @@ export default function WizardContainer() {
                     </div>
 
                     <div className="flex justify-between border-y py-4 text-sm font-black uppercase">
-                      <span className="text-[#00BFFF]">{currentAuto.match_percent}% Match</span>
+                      <span className="text-[#00BFFF]">{currentAuto.match_percent ? `${currentAuto.match_percent}% Match` : 'Añadido Extra'}</span>
                       <span className="text-[#0A1F33]">${currentAuto.precioUsd?.toLocaleString()}</span>
                     </div>
                     
