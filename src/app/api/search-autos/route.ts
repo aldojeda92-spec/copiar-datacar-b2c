@@ -2,84 +2,87 @@ import { NextResponse } from 'next/server';
 // @ts-ignore
 import { Pool } from 'pg'; 
 
+// Obligamos a Vercel a no cachear esta ruta jamás
 export const dynamic = 'force-dynamic';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false },
+  query_timeout: 5000 
 });
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const q = searchParams.get('q') || '';
-
-  // Si escriben menos de 2 letras, no gastamos recursos de la base de datos
-  if (q.length < 2) return NextResponse.json({ autos: [] });
-
   try {
-    // Pedimos las columnas exactas que nos pasaste de Neon
+    const { searchParams } = new URL(request.url);
+    const q = searchParams.get('q');
+
+    if (!q || q.trim().length < 2) {
+      return NextResponse.json({ autos: [] }, { status: 200 });
+    }
+
+    const searchTerm = `%${q.trim()}%`;
+
+    // SOLUCIÓN INDESTRUCTIBLE: SELECT * trae todo lo que existe en la tabla actualmente.
+    // Ordenamos por precio_usd tal como queríamos.
     const query = `
-      SELECT 
-        id, marca, modelo, version, concesionaria, tipo_carroceria,
-        precio_usd, combustible, motor, transmision, traccion,
-        baulera_litros, origen, origen_marca, url_imagen, garantia,
-        subsegmento, largo, ancho, alto, despeje_suelo, plazas,
-        adas, asiento_cuero, techo_panoramico, tamanho_pantalla,
-        conectividad, camaras, airbags, precio, baulera, url_auto
+      SELECT *
       FROM catalogo_matriz
       WHERE marca ILIKE $1 OR modelo ILIKE $1
-      ORDER BY marca ASC, precio_usd ASC
+      ORDER BY precio_usd ASC
       LIMIT 15
     `;
     
-    // Ejecutamos la búsqueda (el ILIKE permite que no importe si escriben en mayúsculas o minúsculas)
-    const res = await pool.query(query, [`%${q}%`]);
+    const res = await pool.query(query, [searchTerm]);
     
-    // TRADUCTOR EXACTO: Convertimos la tabla de Neon al formato que exige tu componente WizardContainer
+    // Mapeamos los datos crudos a la estructura que necesita tu Frontend
     const autos = res.rows.map(row => ({
       id: row.id,
       puesto: 0, 
-      match_percent: 99, // Etiqueta visual para indicar que fue una búsqueda manual
-      marca: row.marca || '',
-      modelo: row.modelo || '',
-      version: row.version || '',
-      precioUsd: row.precio_usd || row.precio || 0,
-      origenMarca: row.origen_marca || '',
-      combustible: row.combustible || '',
-      urlImagen: row.url_imagen || '',
-      motor: row.motor || '',
-      traccion: row.traccion || '',
-      transmision: row.transmision || '',
-      // Si baulera_litros está vacío, intenta rescatar el número de la columna baulera (VARCHAR)
-      bauleraLitros: row.baulera_litros || parseInt(row.baulera) || 0,
-      garantia: row.garantia || '',
-      adas: row.adas || '',
-      airbags: row.airbags || '',
-      tamanhoPantalla: row.tamanho_pantalla || '',
-      camaras: row.camaras || '',
-      plazas: row.plazas || 5,
-      largo: row.largo || 0,
-      ancho: row.ancho || 0,
-      alto: row.alto || 0,
-      despejeSuelo: row.despeje_suelo || 0,
-      asientoCuero: row.asiento_cuero || '',
-      techoPanoramico: row.techo_panoramico || '',
-      conectividad: row.conectividad || '',
-      concesionaria: row.concesionaria || '',
-      veredicto: "Vehículo agregado manualmente desde el catálogo general.",
+      match_percent: 99, 
+      marca: row.marca ?? 'Desconocida',
+      modelo: row.modelo ?? 'Sin Modelo',
+      version: row.version ?? 'STD',
+      // Priorizamos precio_usd, y si por algún motivo no viene, usamos precio
+      precioUsd: Number(row.precio_usd) || Number(row.precio) || 0,
+      origenMarca: row.origen_marca ?? 'No especificado',
+      combustible: row.combustible ?? '',
+      urlImagen: row.url_imagen ?? '',
+      motor: row.motor ?? '',
+      traccion: row.traccion ?? '',
+      transmision: row.transmision ?? '',
+      // Priorizamos baulera_litros
+      bauleraLitros: Number(row.baulera_litros) || parseInt(row.baulera || '0', 10) || 0,
+      garantia: row.garantia ?? '',
+      adas: row.adas ?? '',
+      airbags: row.airbags ?? '',
+      tamanhoPantalla: row.tamanho_pantalla ?? '',
+      camaras: row.camaras ?? '',
+      plazas: Number(row.plazas) || 5,
+      largo: Number(row.largo) || 0,
+      ancho: Number(row.ancho) || 0,
+      alto: Number(row.alto) || 0,
+      despejeSuelo: Number(row.despeje_suelo) || 0,
+      asientoCuero: row.asiento_cuero ?? '',
+      techoPanoramico: row.techo_panoramico ?? '',
+      conectividad: row.conectividad ?? '',
+      concesionaria: row.concesionaria ?? '',
+      veredicto: "Vehículo agregado manualmente desde el buscador.",
       versiones: [
         {
           id: row.id,
-          version: row.version || '',
-          precioUsd: row.precio_usd || row.precio || 0
+          version: row.version ?? 'STD',
+          precioUsd: Number(row.precio_usd) || Number(row.precio) || 0
         }
       ]
     }));
 
-    return NextResponse.json({ autos });
+    return NextResponse.json({ autos }, { status: 200 });
     
   } catch (error: any) {
-    console.error("ERROR EN BUSCADOR:", error.message);
-    return NextResponse.json({ autos: [], error: error.message }, { status: 500 });
+    console.error("[CRÍTICO] Error en API /search-autos:", error);
+    return NextResponse.json(
+      { autos: [], message: "Error interno", errorDetail: error.message }, 
+      { status: 500 }
+    );
   }
 }
