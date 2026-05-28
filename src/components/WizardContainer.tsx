@@ -148,7 +148,7 @@ export default function WizardContainer() {
     window.scrollTo(0, 0);
   };
 
-  // EFECTO DEL BUSCADOR PREDICTIVO (Se dispara cuando el usuario tipea)
+  // EFECTO DEL BUSCADOR PREDICTIVO
   useEffect(() => {
     if (searchTerm.trim().length < 2) {
       setSearchResults([]);
@@ -167,11 +167,11 @@ export default function WizardContainer() {
       } finally {
         setIsSearching(false);
       }
-    }, 400); // 400ms de espera antes de buscar para no saturar la BD
+    }, 400); 
     return () => clearTimeout(delayFn);
   }, [searchTerm]);
 
-  // UNIFICACIÓN DE AUTOS: Une el Top 10 de la IA con los agregados manualmente y evita duplicados
+  // UNIFICACIÓN DE AUTOS
   const displayedAutos = [...manualSelections, ...top10].filter((auto, index, self) =>
     index === self.findIndex((a) => a.id === auto.id)
   );
@@ -213,100 +213,235 @@ export default function WizardContainer() {
     </div>
   );
 
+  // ============================================================================
+  // BLOQUE DE COMPARACIÓN (Contiene la Vista Web y la Vista Oculta de PDF)
+  // ============================================================================
   if (showComparison) {
     const selected = displayedAutos.filter(a => compareIds.includes(a.id));
+    
+    // Cálculos para el Dossier PDF
+    const autoRecomendado = selected.length > 0 ? (activeVersions[selected[0].id] || selected[0]) : null;
+    const opcionesExtra = top10.filter(a => !compareIds.includes(a.id)).slice(0, 2);
+
     return (
-      <div className="min-h-screen bg-white p-2 md:p-6 animate-in fade-in duration-500">
-        <div className="max-w-7xl mx-auto space-y-4">
-          
-          <div className="flex flex-row justify-between items-center gap-4 border-b-2 border-[#0A1F33] pb-2">
-            <h2 className="text-xl md:text-2xl font-montserrat font-black text-[#0A1F33] uppercase leading-none">
-              Comparativa <span className="text-[#00BFFF]">Datos Duros</span>
-            </h2>
-            <button onClick={() => setShowComparison(false)} className="bg-[#0A1F33] text-white px-4 py-2 font-black text-[9px] uppercase tracking-widest hover:bg-[#00BFFF] transition-all">
-              ← Volver
-            </button>
-          </div>
-          
-          <div className="w-full overflow-auto max-h-[85vh] border-b-2 border-slate-200 shadow-inner rounded-lg relative">
-            <div className="min-w-[900px]">
+      <>
+        {/* === VISTA INTERACTIVA (Se oculta totalmente al imprimir gracias a "print:hidden") === */}
+        <div className="min-h-screen bg-white p-2 md:p-6 animate-in fade-in duration-500 print:hidden">
+          <div className="max-w-7xl mx-auto space-y-4">
+            
+            <div className="flex flex-row justify-between items-center gap-4 border-b-2 border-[#0A1F33] pb-2">
+              <h2 className="text-xl md:text-2xl font-montserrat font-black text-[#0A1F33] uppercase leading-none">
+                Comparativa <span className="text-[#00BFFF]">Datos Duros</span>
+              </h2>
               
-              <div className="grid grid-cols-4 gap-1 sticky top-0 z-50 bg-white shadow-md border-b-2 border-slate-200">
-                <div className="bg-slate-50 p-2 flex flex-col justify-end font-black text-[9px] text-slate-400 uppercase tracking-widest">
-                  Especificaciones
-                </div>
-                {selected.map(auto => {
-                   const currentAuto = activeVersions[auto.id] || auto;
-                   return (
-                    <div key={auto.id} className="p-2 text-center space-y-1.5 bg-white border-x flex flex-col justify-between">
-                      <div className="h-12 flex items-center justify-center"> 
-                        <img src={currentAuto.urlImagen} className="max-h-full object-contain mx-auto" alt={currentAuto.modelo} />
-                      </div>
-                      <div className="leading-tight">
-                        <h3 className="font-black text-[#0A1F33] uppercase text-[10px]">{currentAuto.marca} {currentAuto.modelo}</h3>
-                        <p className="text-[#00BFFF] font-black text-xs">${currentAuto.precioUsd.toLocaleString()}</p>
-                      </div>
-                      <a href={`https://wa.me/595991244469?text=Me interesa el ${currentAuto.marca} ${currentAuto.modelo} del comparador Datacar.`} target="_blank" className="block w-full py-1 bg-[#0A1F33] text-white text-center font-black text-[8px] uppercase tracking-widest hover:bg-[#00BFFF] transition-all">
-                        Quiero Comprar
-                      </a>
-                    </div>
-                   );
-                })}
+              {/* BOTONERA AÑADIDA: Guardar PDF y Volver */}
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => window.print()} 
+                  className="bg-slate-100 text-[#0A1F33] border border-slate-200 px-4 py-2 font-black text-[9px] uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center gap-2"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  Guardar PDF
+                </button>
+                <button onClick={() => setShowComparison(false)} className="bg-[#0A1F33] text-white px-4 py-2 font-black text-[9px] uppercase tracking-widest hover:bg-[#00BFFF] transition-all">
+                  ← Volver
+                </button>
               </div>
-
-              {[
-                { label: 'Versión', key: 'version' },
-                { label: 'Motorización', key: 'motor' },
-                { label: 'Combustible', key: 'combustible' },
-                { label: 'Transmisión', key: 'transmision' },
-                { label: 'Tracción', key: 'traccion' },
-                { label: 'Seguridad (ADAS)', key: 'adas' },
-                { label: 'Airbags', key: 'airbags' },
-                { label: 'Dimensiones', key: 'dimensiones' },
-                { label: 'Despeje del Suelo', key: 'despejeSuelo' },
-                { label: 'Baulera (Litros)', key: 'bauleraLitros' },
-                { label: 'Capacidad Plazas', key: 'plazas' },
-                { label: 'Infoentretenimiento', key: 'tamanhoPantalla' },
-                { label: 'Conectividad', key: 'conectividad' },
-                { label: 'Sistema de Cámaras', key: 'camaras' },
-                { label: 'Tapizado en cuero', key: 'asientoCuero' },
-                { label: 'Techo / Sunroof', key: 'techoPanoramico' },
-                { label: 'Garantía oficial', key: 'garantia' },
-                { label: 'Origen de Marca', key: 'origenMarca' }
-              ].map((item, idx) => (
-                <div key={idx} className={`grid grid-cols-4 gap-1 ${idx % 2 === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
-                  <div className="p-3 font-black text-[9px] uppercase text-slate-500 flex items-center">{item.label}</div>
+            </div>
+            
+            <div className="w-full overflow-auto max-h-[85vh] border-b-2 border-slate-200 shadow-inner rounded-lg relative">
+              <div className="min-w-[900px]">
+                
+                <div className="grid grid-cols-4 gap-1 sticky top-0 z-50 bg-white shadow-md border-b-2 border-slate-200">
+                  <div className="bg-slate-50 p-2 flex flex-col justify-end font-black text-[9px] text-slate-400 uppercase tracking-widest">
+                    Especificaciones
+                  </div>
                   {selected.map(auto => {
-                    const currentAuto = activeVersions[auto.id] || auto;
-                    
-                    let valor = (currentAuto as any)[item.key];
-                    
-                    if (item.key === 'dimensiones') {
-                      valor = (currentAuto.largo && currentAuto.ancho) ? `${currentAuto.largo}x${currentAuto.ancho}x${currentAuto.alto || ''} mm` : null;
-                    } else if (item.key === 'despejeSuelo') {
-                      valor = currentAuto.despejeSuelo ? `${currentAuto.despejeSuelo} mm` : null;
-                    }
-
-                    const linkWhatsApp = `https://wa.me/595991244469?text=Hola, quiero consultar el dato de *${item.label}* para el vehículo *${currentAuto.marca} ${currentAuto.modelo}* que vi en Datacar.`;
-
-                    return (
-                      <div key={auto.id} className="p-3 text-center text-[10px] font-bold text-[#0A1F33] flex items-center justify-center border-x">
-                        {valor && valor !== '–' && String(valor).trim() !== '' ? (
-                          valor
-                        ) : (
-                          <a href={linkWhatsApp} target="_blank" rel="noopener noreferrer" className="text-[8px] px-2 py-1.5 bg-[#0A1F33] text-white rounded font-black uppercase tracking-widest hover:bg-[#00BFFF] transition-colors">
-                            Consultar Dato
-                          </a>
-                        )}
+                     const currentAuto = activeVersions[auto.id] || auto;
+                     return (
+                      <div key={auto.id} className="p-2 text-center space-y-1.5 bg-white border-x flex flex-col justify-between">
+                        <div className="h-12 flex items-center justify-center"> 
+                          <img src={currentAuto.urlImagen} className="max-h-full object-contain mx-auto" alt={currentAuto.modelo} />
+                        </div>
+                        <div className="leading-tight">
+                          <h3 className="font-black text-[#0A1F33] uppercase text-[10px]">{currentAuto.marca} {currentAuto.modelo}</h3>
+                          <p className="text-[#00BFFF] font-black text-xs">${currentAuto.precioUsd.toLocaleString()}</p>
+                        </div>
+                        <a href={`https://wa.me/595991244469?text=Me interesa el ${currentAuto.marca} ${currentAuto.modelo} del comparador Datacar.`} target="_blank" className="block w-full py-1 bg-[#0A1F33] text-white text-center font-black text-[8px] uppercase tracking-widest hover:bg-[#00BFFF] transition-all">
+                          Quiero Comprar
+                        </a>
                       </div>
-                    );
+                     );
                   })}
                 </div>
-              ))}
+
+                {[
+                  { label: 'Versión', key: 'version' },
+                  { label: 'Motorización', key: 'motor' },
+                  { label: 'Combustible', key: 'combustible' },
+                  { label: 'Transmisión', key: 'transmision' },
+                  { label: 'Tracción', key: 'traccion' },
+                  { label: 'Seguridad (ADAS)', key: 'adas' },
+                  { label: 'Airbags', key: 'airbags' },
+                  { label: 'Dimensiones', key: 'dimensiones' },
+                  { label: 'Despeje del Suelo', key: 'despejeSuelo' },
+                  { label: 'Baulera (Litros)', key: 'bauleraLitros' },
+                  { label: 'Capacidad Plazas', key: 'plazas' },
+                  { label: 'Infoentretenimiento', key: 'tamanhoPantalla' },
+                  { label: 'Conectividad', key: 'conectividad' },
+                  { label: 'Sistema de Cámaras', key: 'camaras' },
+                  { label: 'Tapizado en cuero', key: 'asientoCuero' },
+                  { label: 'Techo / Sunroof', key: 'techoPanoramico' },
+                  { label: 'Garantía oficial', key: 'garantia' },
+                  { label: 'Origen de Marca', key: 'origenMarca' }
+                ].map((item, idx) => (
+                  <div key={idx} className={`grid grid-cols-4 gap-1 ${idx % 2 === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
+                    <div className="p-3 font-black text-[9px] uppercase text-slate-500 flex items-center">{item.label}</div>
+                    {selected.map(auto => {
+                      const currentAuto = activeVersions[auto.id] || auto;
+                      
+                      let valor = (currentAuto as any)[item.key];
+                      
+                      if (item.key === 'dimensiones') {
+                        valor = (currentAuto.largo && currentAuto.ancho) ? `${currentAuto.largo}x${currentAuto.ancho}x${currentAuto.alto || ''} mm` : null;
+                      } else if (item.key === 'despejeSuelo') {
+                        valor = currentAuto.despejeSuelo ? `${currentAuto.despejeSuelo} mm` : null;
+                      }
+
+                      const linkWhatsApp = `https://wa.me/595991244469?text=Hola, quiero consultar el dato de *${item.label}* para el vehículo *${currentAuto.marca} ${currentAuto.modelo}* que vi en Datacar.`;
+
+                      return (
+                        <div key={auto.id} className="p-3 text-center text-[10px] font-bold text-[#0A1F33] flex items-center justify-center border-x">
+                          {valor && valor !== '–' && String(valor).trim() !== '' ? (
+                            valor
+                          ) : (
+                            <a href={linkWhatsApp} target="_blank" rel="noopener noreferrer" className="text-[8px] px-2 py-1.5 bg-[#0A1F33] text-white rounded font-black uppercase tracking-widest hover:bg-[#00BFFF] transition-colors">
+                              Consultar Dato
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+
+        {/* === VISTA DEL DOSSIER PDF (Se oculta en la web "hidden", se muestra al imprimir "print:block") === */}
+        {autoRecomendado && (
+          <div className="hidden print:block w-full bg-white p-8">
+            {/* CABECERA */}
+            <header className="border-b-4 border-[#0A1F33] pb-6 mb-8 flex justify-between items-end">
+              <div>
+                <h1 className="text-4xl font-montserrat font-black uppercase tracking-tighter">DATA<span className="text-[#00BFFF]">CAR</span></h1>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Consultoría Automotriz · Asunción, Paraguay</p>
+              </div>
+              <div className="text-right">
+                <h2 className="text-xl font-montserrat font-black uppercase text-[#0A1F33]">Dossier Estratégico</h2>
+                <p className="text-xs font-bold text-slate-500">Generado para: {PEDIR_DATOS_USUARIO && formData.nombre !== 'Invitado' ? formData.nombre : 'Cliente VIP'}</p>
+              </div>
+            </header>
+
+            {/* 1. LA RECOMENDACIÓN DATACAR */}
+            <section className="bg-slate-50 p-6 rounded-lg mb-8 border-l-8 border-[#0A1F33] border-b-2 border-slate-200">
+              <div className="flex items-start gap-6">
+                <div className="flex-1">
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-[#00BFFF] mb-2">⭐ Veredicto del Arquitecto Datacar</h3>
+                  <h4 className="text-2xl font-montserrat font-black uppercase leading-none mb-2 text-[#0A1F33]">
+                    {autoRecomendado.marca} {autoRecomendado.modelo} <span className="font-light text-slate-500 text-lg">{autoRecomendado.version}</span>
+                  </h4>
+                  <p className="text-sm text-slate-600 font-medium leading-relaxed italic">
+                    "{autoRecomendado.veredicto || "Opción destacada en base a tu perfil de búsqueda y presupuesto actual."}"
+                  </p>
+                </div>
+                <div className="w-32 h-32 bg-white border border-slate-200 rounded flex items-center justify-center p-2 flex-shrink-0 shadow-sm">
+                  <img src={autoRecomendado.urlImagen} alt={autoRecomendado.modelo} className="max-w-full max-h-full object-contain" />
+                </div>
+              </div>
+            </section>
+
+            {/* 2. GRILLA COMPARATIVA (Resumida y Limpia para el PDF) */}
+            <section className="mb-10">
+              <h3 className="text-sm font-montserrat font-black uppercase tracking-widest text-[#0A1F33] border-b-2 border-slate-200 pb-2 mb-4">Análisis de Datos Duros</h3>
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 text-[9px] uppercase tracking-widest text-slate-500">
+                    <th className="p-3 font-black border border-slate-200">Especificación</th>
+                    {selected.map(auto => (
+                      <th key={auto.id} className="p-3 font-black border border-slate-200 text-center text-[#0A1F33]">{auto.marca} {auto.modelo}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="font-medium text-slate-600">
+                  {[
+                    { label: 'Precio USD', key: 'precioUsd', isPrice: true },
+                    { label: 'Versión', key: 'version' },
+                    { label: 'Motor', key: 'motor' },
+                    { label: 'Baulera', key: 'bauleraLitros' },
+                    { label: 'Garantía', key: 'garantia' },
+                    { label: 'Seguridad (ADAS)', key: 'adas' },
+                  ].map((item, idx) => (
+                    <tr key={idx} className="border-b border-slate-200 break-inside-avoid">
+                      <td className="p-3 bg-slate-50 font-black text-[9px] uppercase text-slate-500 border border-slate-200">{item.label}</td>
+                      {selected.map(auto => {
+                        const currentAuto = activeVersions[auto.id] || auto;
+                        let valor = (currentAuto as any)[item.key];
+                        if (item.key === 'bauleraLitros' && valor) valor = `${valor} Litros`;
+                        if (item.isPrice && valor) valor = `$${valor.toLocaleString()}`;
+                        
+                        return (
+                          <td key={auto.id} className={`p-3 border border-slate-200 text-center ${item.isPrice ? 'font-black text-[#00BFFF]' : ''}`}>
+                            {valor || 'Consultar'}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+
+            {/* 3. OPCIONES ALTERNATIVAS */}
+            {opcionesExtra.length > 0 && (
+              <section className="mb-12">
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Otras opciones que cumplen tu perfil:</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {opcionesExtra.map(auto => (
+                    <div key={auto.id} className="p-4 border border-slate-200 bg-white flex items-center gap-4 shadow-sm">
+                      <img src={auto.urlImagen} className="w-16 h-12 object-contain" alt={auto.modelo} />
+                      <div className="flex-1">
+                        <h4 className="font-black text-sm uppercase text-[#0A1F33]">{auto.marca} <span className="font-medium text-xs text-slate-500 block">{auto.modelo}</span></h4>
+                        <p className="text-[9px] font-bold text-[#00BFFF] mt-1">${auto.precioUsd?.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* 4. CALL TO ACTION (CIERRE DE VENTAS) */}
+            <footer className="bg-slate-100 p-8 border-t-4 border-[#00BFFF] rounded-sm break-inside-avoid mt-10">
+              <div className="flex items-center justify-between">
+                <div className="max-w-[70%]">
+                  <h3 className="text-xl font-montserrat font-black uppercase text-[#0A1F33] mb-2">
+                    ☕ ¿Tomamos un café y lo definimos? <span className="text-[#00BFFF]">Es gratis.</span>
+                  </h3>
+                  <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                    Comprar un 0km es una decisión importante. Un asesor experto de DATACAR te invita un café para revisar este reporte, analizar opciones de financiación y conseguirte los mejores beneficios en la concesionaria.
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Hablemos por WhatsApp</p>
+                  <p className="text-xl font-black text-[#0A1F33]">0991 244 469</p>
+                  <p className="text-[10px] font-bold text-[#00BFFF] mt-1">datacarpy.com</p>
+                </div>
+              </div>
+            </footer>
+          </div>
+        )}
+      </>
     );
   }
 
@@ -641,7 +776,7 @@ export default function WizardContainer() {
           </div>
           
           {compareIds.length >= 1 && (
-            <div className="fixed bottom-6 md:bottom-12 left-1/2 -translate-x-1/2 z-50 w-[95%] md:w-auto bg-[#0A1F33] text-white p-4 md:p-8 shadow-2xl flex items-center justify-between md:justify-center md:gap-10 border-t-4 border-[#00BFFF] rounded-sm animate-in slide-in-from-bottom-10">
+            <div className="fixed bottom-6 md:bottom-12 left-1/2 -translate-x-1/2 z-50 w-[95%] md:w-auto bg-[#0A1F33] text-white p-4 md:p-8 shadow-2xl flex items-center justify-between md:justify-center md:gap-10 border-t-4 border-[#00BFFF] rounded-sm animate-in slide-in-from-bottom-10 print:hidden">
               <div className="text-sm font-bold uppercase">{compareIds.length} <span className="text-slate-500 font-light">seleccionados</span></div>
               {compareIds.length >= 2 ? (
                 <button onClick={handleOpenComparison} className="bg-[#00BFFF] text-[#0A1F33] px-10 py-4 font-black text-[11px] uppercase tracking-widest hover:bg-white transition-all">Comparar Datos Duros</button>
