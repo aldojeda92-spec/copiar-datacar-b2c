@@ -3,6 +3,9 @@ import Script from 'next/script';
 import './globals.css';
 import { Inter, Montserrat } from 'next/font/google';
 
+// IMPORTACIÓN DEL INTERCEPTOR PWA
+import PwaInstallPrompt from '@/components/PwaInstallPrompt';
+
 const inter = Inter({ 
   subsets: ['latin'], 
   variable: '--font-inter',
@@ -51,6 +54,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           `}
         </Script>
         {/* --- FIN GOOGLE TAG --- */}
+
+        {/* INYECTOR DE INSTALACIÓN PWA */}
+        <PwaInstallPrompt />
 
         {children}
       </body>
