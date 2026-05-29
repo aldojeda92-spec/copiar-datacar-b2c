@@ -578,7 +578,7 @@ export default function WizardContainer() {
             </div>
 
             <div className="space-y-4">
-              <label className="text-[9px] font-black uppercase text-slate-400">Atributos Críticos (Seleccionar 3) *</label>
+              <label className="text-[9px] font-black uppercase text-slate-400">Atributos que buscás en tu próximo 0km (Seleccionar 3) *</label>
               <div className="flex flex-wrap gap-2">
                 {['Seguridad', 'Tecnología', 'Espacio', 'Precio', 'Eficiencia'].map(at => (
                   <button key={at} onClick={() => toggleAtributo(at)} className={`px-6 py-2 text-[10px] font-black border-2 transition-all ${formData.atributos.includes(at) ? 'bg-[#0A1F33] text-white border-[#0A1F33]' : 'text-slate-300 border-slate-100 hover:border-slate-200'}`}>{at}</button>
