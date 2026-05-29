@@ -565,7 +565,7 @@ export default function WizardContainer() {
 
             <div className="space-y-10">
               <div className="flex justify-between items-center">
-                <label className="text-[9px] font-black uppercase text-slate-400">Margen de Inversión (USD)</label>
+                <label className="text-[9px] font-black uppercase text-slate-400">Presupuesto (USD)</label>
                 <div className="flex gap-4 font-black text-[#0A1F33] text-sm tracking-tighter bg-slate-50 px-4 py-2 rounded-full">
                   <span>${formData.presupuestoMin.toLocaleString()}</span> — <span>${formData.presupuestoMax.toLocaleString()}</span>
                 </div>
