@@ -1,3 +1,4 @@
+import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import './globals.css';
 import { Inter, Montserrat } from 'next/font/google';
@@ -14,9 +15,21 @@ const montserrat = Montserrat({
   weight: ['300', '900'] 
 });
 
-export const metadata = {
+// Estándar estricto de Next.js 14+ para el diseño de la pantalla del dispositivo
+export const viewport: Viewport = {
+  themeColor: '#0A1F33',
+};
+
+// Metadatos de SEO y Registro de la PWA
+export const metadata: Metadata = {
   title: 'DATACAR | Inversiones Automotrices',
   description: 'Gestión analítica de inversiones automotrices.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Datacar',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
