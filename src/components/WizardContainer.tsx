@@ -64,7 +64,7 @@ export default function WizardContainer() {
   const [isSavingLead, setIsSavingLead] = useState(false);
 
   const [formData, setFormData] = useState({
-    nombre: PEDIR_DATOS_USUARIO ? '' : 'Invitado CADAM', 
+    nombre: PEDIR_DATOS_USUARIO ? '' : 'Socio Universitario (Invitado)', 
     celular: PEDIR_DATOS_USUARIO ? '' : '0999999999', 
     email: '', 
     presupuestoMin: 15000, 
@@ -122,7 +122,7 @@ export default function WizardContainer() {
       const result = await saveLeadAction(formData);
       if (result.success && result.leadId) {
         setCurrentLeadId(result.leadId);
-        localStorage.setItem('cadam_lead_id', result.leadId);
+        localStorage.setItem('universitaria_lead_id', result.leadId);
         const res = await fetch('/api/analyze', { 
           method: 'POST', body: JSON.stringify({ leadId: result.leadId }),
           headers: { 'Content-Type': 'application/json' }
@@ -135,13 +135,13 @@ export default function WizardContainer() {
           window.scrollTo(0, 0); 
         }
       }
-    } catch (e) { alert("Error de conexión con el servidor central."); } finally { setIsAnalyzing(false); }
+    } catch (e) { alert("Error de conexión con el sistema cooperativo."); } finally { setIsAnalyzing(false); }
   };
 
   const handleOpenComparison = async () => {
     const selected = displayedAutos.filter(a => compareIds.includes(a.id));
     const nombres = selected.map(a => `${a.marca} ${a.modelo}`).join(' vs ');
-    const leadIdToUse = currentLeadId || localStorage.getItem('cadam_lead_id');
+    const leadIdToUse = currentLeadId || localStorage.getItem('universitaria_lead_id');
     if (leadIdToUse && compareIds.length >= 2) {
       await logComparisonAction({ leadId: leadIdToUse, vIds: compareIds, nombres: nombres });
     }
@@ -184,7 +184,7 @@ export default function WizardContainer() {
           setSearchResults(data.autos || []);
         }
       } catch (e) {
-        console.error("Error al buscar en el catálogo oficial", e);
+        console.error("Error al buscar en el catálogo automotor", e);
       } finally {
         setIsSearching(false);
       }
@@ -198,27 +198,27 @@ export default function WizardContainer() {
 
   const MultiSelect = ({ label, items, value, storeKey }: { label: string, items: string[], value: string[], storeKey: any }) => (
     <div className="space-y-1 relative">
-      <label className="text-[10px] font-bold uppercase text-gray-500 tracking-wide">{label}</label>
+      <label className="text-[10px] font-bold uppercase text-slate-500 tracking-wide">{label}</label>
       <div 
         onClick={() => setOpenFilter(openFilter === label ? null : label)}
-        className="w-full p-3 bg-white border border-gray-200 text-sm cursor-pointer flex justify-between items-center hover:border-[#005c97] transition-all rounded"
+        className="w-full p-3 bg-white border border-slate-200 text-sm cursor-pointer flex justify-between items-center hover:border-[#006837] transition-all rounded shadow-sm"
       >
-        <span className="truncate pr-4 font-medium text-gray-800">
+        <span className="truncate pr-4 font-medium text-slate-800">
           {value.length > 0 ? value.join(', ') : 'Cualquier opción'}
         </span>
-        <span className="text-[#005c97] text-[10px]">{openFilter === label ? '▲' : '▼'}</span>
+        <span className="text-[#006837] text-[10px]">{openFilter === label ? '▲' : '▼'}</span>
       </div>
       {openFilter === label && (
-        <div className="absolute z-50 w-full bg-white border border-gray-200 shadow-xl max-h-60 overflow-y-auto p-1 mt-1 rounded animate-in fade-in zoom-in duration-150">
+        <div className="absolute z-50 w-full bg-white border border-slate-200 shadow-2xl max-h-60 overflow-y-auto p-1 mt-1 rounded animate-in fade-in zoom-in duration-150">
           {items.map(item => (
-            <label key={item} className="flex items-center gap-3 p-2.5 hover:bg-gray-50 cursor-pointer rounded transition-colors">
+            <label key={item} className="flex items-center gap-3 p-2.5 hover:bg-slate-50 cursor-pointer rounded transition-colors">
               <input 
                 type="checkbox" 
                 checked={value.includes(item)} 
                 onChange={() => toggleArrayItem(storeKey, item)}
-                className="w-4 h-4 accent-[#005c97] rounded border-gray-300"
+                className="w-4 h-4 accent-[#006837] rounded border-slate-300"
               />
-              <span className="text-xs font-semibold text-gray-700 uppercase tracking-wider">{item}</span>
+              <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">{item}</span>
             </label>
           ))}
         </div>
@@ -227,9 +227,10 @@ export default function WizardContainer() {
   );
 
   if (isAnalyzing) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white font-sans">
-      <div className="w-10 h-10 border-4 border-gray-100 border-t-[#005c97] rounded-full animate-spin mb-6"></div>
-      <p className="font-semibold text-sm tracking-normal text-gray-600">Procesando información del Mercado Automotor Paraguayo...</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white font-sans text-center px-6">
+      <div className="w-12 h-12 border-4 border-slate-100 border-t-[#006837] rounded-full animate-spin mb-6"></div>
+      <p className="font-semibold text-base tracking-normal text-[#006837] mb-2">Buscando las mejores oportunidades para su crecimiento...</p>
+      <p className="text-sm text-slate-500">Procesando datos del mercado automotor con respaldo Cooperativo.</p>
     </div>
   );
 
@@ -239,33 +240,34 @@ export default function WizardContainer() {
     const opcionesExtra = top10.filter(a => !compareIds.includes(a.id)).slice(0, 3);
 
     return (
-      <div className="font-sans bg-gray-50 text-gray-900">
+      <div className="font-sans bg-slate-50 text-slate-900">
         
-        {/* MODAL DE LEAD MAGNET - Estilo CADAM */}
+        {/* MODAL DE LEAD MAGNET - Estilo Cooperativa */}
         {showLeadModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-300 print:hidden">
-            <div className="bg-white max-w-md w-full p-8 shadow-2xl rounded-sm relative border-t-4 border-[#005c97]">
-              <button onClick={() => setShowLeadModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800">✕</button>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 animate-in fade-in duration-300 print:hidden">
+            <div className="bg-white max-w-md w-full p-8 shadow-3xl rounded-lg relative border-t-8 border-[#FFD100]">
+              <button onClick={() => setShowLeadModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-800">✕</button>
               
               <div className="text-center mb-6">
-                <h3 className="font-extrabold text-xl text-gray-950 uppercase leading-tight mb-2">
-                  Valide su <span className="text-[#005c97]">Informe Técnico</span>
+                <div className="bg-[#006837] text-white font-extrabold text-xs px-3 py-1 inline-block rounded-full mb-3 tracking-widest uppercase">Atención Socio</div>
+                <h3 className="font-extrabold text-2xl text-[#006837] leading-tight mb-2">
+                  Formalice su <span className="text-[#FFD100]">Solicitud</span>
                 </h3>
-                <p className="text-xs text-gray-600 font-medium">Complete sus datos para formalizar el documento con su nombre y recibir el respaldo de las empresas asociadas a CADAM.</p>
+                <p className="text-sm text-slate-600 font-medium">Complete sus datos para generar la ficha de solicitud de crédito con su nombre y recibir el asesoramiento de su Cooperativa.</p>
               </div>
 
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase text-gray-500 rounded">Nombre y Apellido / Razón Social</label>
+                  <label className="text-[10px] font-bold uppercase text-slate-500 rounded">Nombre y Apellido del Socio / Razón Social</label>
                   <input 
                     value={formData.nombre.includes('Invitado') ? '' : formData.nombre} 
                     onChange={e => setFormData({...formData, nombre: e.target.value})} 
-                    className="w-full p-3 border border-gray-200 bg-white outline-none focus:border-[#005c97] text-sm font-semibold text-gray-900 rounded" 
+                    className="w-full p-3 border border-slate-200 bg-white outline-none focus:border-[#006837] text-sm font-semibold text-slate-900 rounded-md shadow-inner" 
                     placeholder="Ej: Juan Pérez o Empresa SA"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase text-gray-500">WhatsApp de Contacto Corporativo</label>
+                  <label className="text-[10px] font-bold uppercase text-slate-500">WhatsApp de Contacto (Celular)</label>
                   <input 
                     type="tel"
                     value={formData.celular === '0999999999' ? '' : formData.celular} 
@@ -273,7 +275,7 @@ export default function WizardContainer() {
                       const soloNumeros = e.target.value.replace(/\D/g, '').slice(0, 10);
                       setFormData({...formData, celular: soloNumeros});
                     }} 
-                    className="w-full p-3 border border-gray-200 bg-white outline-none focus:border-[#005c97] text-sm font-semibold text-gray-900 rounded" 
+                    className="w-full p-3 border border-slate-200 bg-white outline-none focus:border-[#006837] text-sm font-semibold text-slate-900 rounded-md shadow-inner" 
                     placeholder="09..."
                   />
                 </div>
@@ -281,74 +283,74 @@ export default function WizardContainer() {
                 <button 
                   disabled={formData.nombre.length < 3 || !isCelularValid || isSavingLead}
                   onClick={handleUnlockDossier} 
-                  className="w-full mt-4 py-3.5 bg-[#005c97] text-white font-bold text-xs uppercase tracking-widest hover:bg-[#004a7a] transition-all rounded disabled:opacity-40 flex items-center justify-center gap-2"
+                  className="w-full mt-4 py-4 bg-[#006837] text-white font-bold text-xs uppercase tracking-widest hover:bg-[#004a7a] transition-all rounded-md disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
                 >
-                  {isSavingLead ? 'Formalizando...' : 'Generar Documento Oficial'}
+                  {isSavingLead ? 'Formalizando Solicitud...' : 'Generar Ficha de Crédito Pre-aprobado'}
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* === VISTA INTERACTIVA WEB - Más Comprimida === */}
-        <div className="min-h-screen bg-gray-50 p-3 md:p-6 animate-in fade-in duration-500 print:hidden">
+        {/* === VISTA INTERACTIVA WEB - Cooperativa === */}
+        <div className="min-h-screen bg-slate-50 p-3 md:p-6 animate-in fade-in duration-500 print:hidden">
           <div className="max-w-7xl mx-auto space-y-4">
             
-            <div className="flex flex-row justify-between items-center gap-4 bg-white p-4 border border-gray-100 rounded shadow-sm">
-              <h2 className="text-lg md:text-xl font-extrabold text-gray-950 uppercase leading-none tracking-tight">
-                Matriz Comparativa de <span className="text-[#005c97]">Datos Técnicos</span>
+            <div className="flex flex-row justify-between items-center gap-4 bg-white p-5 border border-slate-100 rounded-lg shadow-sm">
+              <h2 className="text-xl md:text-2xl font-extrabold text-[#006837] leading-none tracking-tight">
+                Matriz Comparativa: <span className="text-[#006837] font-light">Datos Técnicos Validatorios</span>
               </h2>
               <div className="flex gap-2">
                 <button 
                   onClick={handlePrintRequest} 
-                  className="bg-gray-100 text-gray-800 border border-gray-200 px-4 py-2 font-bold text-[10px] uppercase tracking-wide hover:bg-gray-200 transition-all flex items-center gap-1.5 rounded"
+                  className="bg-slate-100 text-[#006837] border border-slate-200 px-5 py-2.5 font-bold text-[10px] uppercase tracking-wide hover:bg-slate-200 transition-all flex items-center gap-2 rounded-full"
                 >
-                  <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                  Descargar Informe Oficial
+                  <svg className="w-4 h-4 text-[#006837]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  Imprimir Ficha de Solicitud
                 </button>
-                <button onClick={() => setShowComparison(false)} className="bg-gray-800 text-white px-4 py-2 font-bold text-[10px] uppercase tracking-wide hover:bg-gray-950 transition-all rounded">
-                  ← Re-ajustar Selección
+                <button onClick={() => setShowComparison(false)} className="bg-[#006837] text-white px-5 py-2.5 font-bold text-[10px] uppercase tracking-wide hover:bg-[#004a7a] transition-all rounded-full shadow">
+                  ← Re-ajustar Búsqueda
                 </button>
               </div>
             </div>
             
-            {/* Tabla de Comparación - Diseño más denso */}
-            <div className="w-full overflow-auto max-h-[85vh] border border-gray-200 shadow-inner rounded relative bg-white">
+            {/* Tabla de Comparación - Diseño Limpio Cooperativa */}
+            <div className="w-full overflow-auto max-h-[85vh] border border-slate-200 shadow-inner rounded-lg relative bg-white">
               <div className="min-w-[850px]">
-                <div className="grid grid-cols-4 gap-px sticky top-0 z-50 bg-gray-200 border-b border-gray-200">
-                  <div className="bg-gray-50 p-3 flex flex-col justify-end font-bold text-[10px] text-gray-500 uppercase tracking-wider">
-                    Ficha Técnica Resumida
+                <div className="grid grid-cols-4 gap-px sticky top-0 z-50 bg-slate-200 border-b border-slate-200">
+                  <div className="bg-slate-50 p-3 flex flex-col justify-end font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+                    Ficha Técnica Homologada
                   </div>
                   {selected.map(auto => {
                      const currentAuto = activeVersions[auto.id] || auto;
                      return (
-                      <div key={auto.id} className="p-3 text-center space-y-2 bg-white flex flex-col justify-between">
-                        <div className="h-10 flex items-center justify-center"> 
+                      <div key={auto.id} className="p-4 text-center space-y-2 bg-white flex flex-col justify-between">
+                        <div className="h-12 flex items-center justify-center mb-1"> 
                           <img src={currentAuto.urlImagen} className="max-h-full object-contain mx-auto" alt={currentAuto.modelo} />
                         </div>
-                        <div className="leading-tight h-8 flex flex-col justify-center">
-                          <h3 className="font-extrabold text-gray-950 uppercase text-[11px] truncate">{currentAuto.marca} {currentAuto.modelo}</h3>
-                          <p className="text-[#005c97] font-extrabold text-xs">${currentAuto.precioUsd.toLocaleString()}</p>
+                        <div className="leading-tight h-10 flex flex-col justify-center">
+                          <h3 className="font-extrabold text-slate-950 uppercase text-[12px] truncate">{currentAuto.marca} {currentAuto.modelo}</h3>
+                          <p className="text-[#006837] font-extrabold text-sm">${currentAuto.precioUsd.toLocaleString()}</p>
                         </div>
-                        <a href={`https://wa.me/595991244469?text=Deseo contactar con un representante autorizado para el ${currentAuto.marca} ${currentAuto.modelo} visto en el portal CADAM.`} target="_blank" className="block w-full py-1.5 bg-[#005c97] text-white text-center font-bold text-[9px] uppercase tracking-widest hover:bg-[#004a7a] transition-all rounded-sm">
-                          Contactar Representante
+                        <a href={`https://wa.me/595216170000?text=Solicito asesoramiento para financiar el ${currentAuto.marca} ${currentAuto.modelo} visto en el portal de la Cooperativa Universitaria.`} target="_blank" className="block w-full py-2 bg-[#006837] text-white text-center font-bold text-[10px] uppercase tracking-widest hover:bg-[#004a7a] transition-all rounded-sm">
+                          Solicitar Crédito
                         </a>
                       </div>
                      );
                   })}
                 </div>
 
-                {/* Filas de datos - Más comprimidas */}
+                {/* Filas de datos - Comprimidas con toque Cooperativa */}
                 {[
-                  { label: 'Versión Específica', key: 'version' },
-                  { label: 'Motorización / Potencia', key: 'motor' },
+                  { label: 'Versión y Denominación', key: 'version' },
+                  { label: 'Motor y Potencia Homologada', key: 'motor' },
                   { label: 'Tipo de Combustible', key: 'combustible' },
                   { label: 'Caja de Transmisión', key: 'transmision' },
                   { label: 'Sistema de Tracción', key: 'traccion' },
                   { label: 'Seguridad Activa (ADAS)', key: 'adas' },
                   { label: 'Cantidad Airbags', key: 'airbags' },
                   { label: 'Dimensiones (LxAnxAl)', key: 'dimensiones' },
-                  { label: 'Despeje del Suelo', key: 'despejeSuelo' },
+                  { label: 'Despeje del Suelo', key: 'despejeS suelo' },
                   { label: 'Capacidad Baúl (Lts)', key: 'bauleraLitros' },
                   { label: 'Capacidad Pasajeros', key: 'plazas' },
                   { label: 'Infoentretenimiento', key: 'tamanhoPantalla' },
@@ -356,11 +358,11 @@ export default function WizardContainer() {
                   { label: 'Asistencia Cámaras', key: 'camaras' },
                   { label: 'Material Tapizado', key: 'asientoCuero' },
                   { label: 'Techo Panorámico / Sunroof', key: 'techoPanoramico' },
-                  { label: 'Garantía de Fábrica', key: 'garantia' },
+                  { label: 'Garantía Oficial', key: 'garantia' },
                   { label: 'País de Origen de Marca', key: 'origenMarca' }
                 ].map((item, idx) => (
-                  <div key={item.key} className={`grid grid-cols-4 gap-px border-b border-gray-100 ${idx % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}`}>
-                    <div className="p-2.5 font-semibold text-[10px] uppercase text-gray-600 flex items-center border-r border-gray-100 tracking-wide">{item.label}</div>
+                  <div key={item.key} className={`grid grid-cols-4 gap-px border-b border-slate-100 ${idx % 2 === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
+                    <div className="p-3 font-semibold text-[10px] uppercase text-slate-600 flex items-center border-r border-slate-100 tracking-wide bg-slate-50">{item.label}</div>
                     {selected.map(auto => {
                       const currentAuto = activeVersions[auto.id] || auto;
                       let valor = (currentAuto as any)[item.key];
@@ -369,12 +371,12 @@ export default function WizardContainer() {
                       } else if (item.key === 'despejeSuelo') {
                         valor = currentAuto.despejeSuelo ? `${currentAuto.despejeSuelo} mm` : null;
                       }
-                      const linkWhatsApp = `https://wa.me/595991244469?text=Solicito confirmar el dato técnico de *${item.label}* para la unidad *${currentAuto.marca} ${currentAuto.modelo}* validado en CADAM.`;
+                      const linkWhatsApp = `https://wa.me/595216170000?text=Hola, solicito verificar el dato técnico de *${item.label}* para la unidad *${currentAuto.marca} ${currentAuto.modelo}* validado en el portal cooperativo.`;
 
                       return (
-                        <div key={auto.id} className="p-2.5 text-center text-xs font-medium text-gray-800 flex items-center justify-center border-r border-gray-100">
+                        <div key={auto.id} className="p-3 text-center text-xs font-medium text-slate-800 flex items-center justify-center border-r border-slate-100">
                           {valor && valor !== '–' && String(valor).trim() !== '' ? valor : (
-                            <a href={linkWhatsApp} target="_blank" rel="noopener noreferrer" className="text-[8px] px-2 py-1 bg-gray-100 text-gray-700 rounded-sm font-bold uppercase tracking-wider hover:bg-gray-200 transition-colors">
+                            <a href={linkWhatsApp} target="_blank" rel="noopener noreferrer" className="text-[9px] px-2.5 py-1.5 bg-[#FFD100] text-[#006837] rounded-sm font-extrabold uppercase tracking-wider hover:bg-white border hover:border-[#006837] transition-colors">
                               Verificar Dato
                             </a>
                           )}
@@ -388,71 +390,76 @@ export default function WizardContainer() {
           </div>
         </div>
 
-        {/* === VISTA DEL DOSSIER PDF - Estilo Institucional CADAM === */}
+        {/* === VISTA DEL DOSSIER PDF - Estilo Institucional Cooperativa === */}
         {autoRecomendado && (
-          <div className="hidden print:block w-full bg-white px-10 py-6 font-sans text-gray-900">
+          <div className="hidden print:block w-full bg-white px-10 py-6 font-sans text-slate-900">
             
-            {/* CABECERA INSTITUCIONAL */}
-            <header className="border-b-2 border-gray-900 pb-4 mb-6 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                {/* Reemplazo visual de logo por texto groso */}
-                <div className="bg-[#005c97] text-white font-sans font-extrabold text-2xl px-3 py-1 rounded-sm tracking-tight">CADAM</div>
+            {/* CABECERA INSTITUCIONAL COOPERATIVA */}
+            <header className="border-b-4 border-[#FFD100] pb-5 mb-8 flex justify-between items-center">
+              <div className="flex items-center gap-4">
+                {/* Logo Placeholder - Pin Cooperativo */}
+                <div className="w-16 h-16 rounded-full bg-[#006837] flex items-center justify-center p-2 border-4 border-[#FFD100] flex-shrink-0">
+                  <div className="text-white text-4xl font-black">CU</div>
+                </div>
                 <div>
-                  <h1 className="text-sm font-extrabold uppercase tracking-tight text-gray-950">Ficha de Validación Técnica</h1>
-                  <p className="text-[9px] font-medium text-gray-600 mt-0.5">Cámara de Distribuidores de Automotores y Maquinarias · Paraguay</p>
+                  <h1 className="text-xl font-black uppercase tracking-tight text-[#006837]">Cooperativa Universitaria<span className="text-[#FFD100]">.</span></h1>
+                  <p className="text-[10px] font-semibold text-slate-600 mt-0.5">Cámara de Validación Técnica y Oportunidades de Crecimiento</p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-[10px] font-bold text-gray-700">Documento generado para:</p>
-                <p className="text-xs font-extrabold text-[#005c97]">{formData.nombre.includes('Invitado') ? 'Interesado Registrado' : formData.nombre}</p>
-                <p className="text-[8px] text-gray-500 mt-1">Válido para consultas con Asociados</p>
+              <div className="text-right flex flex-col items-end">
+                <p className="text-[11px] font-bold text-slate-700">Ficha de Solicitud de Crédito Pre-aprobado</p>
+                <p className="text-sm font-extrabold text-[#006837] bg-[#FFD100] px-3 py-1 rounded-sm mt-1">{formData.nombre.includes('Invitado') ? 'Socio Universitario' : formData.nombre}</p>
+                <p className="text-[9px] text-slate-500 mt-1.5">Documento referencial para gestión en sucursales.</p>
               </div>
             </header>
 
-            {/* UNIDAD SELECCIONADA PRINCIPAL */}
-            <section className="bg-gray-50 p-4 mb-6 border border-gray-200 rounded break-inside-avoid shadow-sm">
-              <div className="flex items-start gap-5">
-                <div className="w-28 h-20 bg-white border border-gray-100 rounded flex items-center justify-center p-1 flex-shrink-0">
+            {/* UNIDAD SELECCIONADA DESTACADA CON PIN DE PUESTO */}
+            <section className="bg-slate-50 p-5 mb-6 border border-slate-200 rounded-lg break-inside-avoid shadow-sm relative">
+                {autoRecomendado.puesto && (
+                    <div className="absolute -top-3 -left-3 w-10 h-10 rounded-full bg-[#FFD100] text-[#006837] flex items-center justify-center font-extrabold text-base border-4 border-white shadow-lg">#{autoRecomendado.puesto}</div>
+                )}
+              <div className="flex items-start gap-6">
+                <div className="w-32 h-24 bg-white border border-slate-100 rounded-md flex items-center justify-center p-2 flex-shrink-0">
                   <img src={autoRecomendado.urlImagen} alt={autoRecomendado.modelo} className="max-w-full max-h-full object-contain" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-[9px] font-bold uppercase tracking-wider text-gray-500 mb-1">Unidad Validada</h3>
-                  <h4 className="text-xl font-extrabold uppercase leading-none mb-1.5 text-gray-950">
-                    {autoRecomendado.marca} {autoRecomendado.modelo} <span className="font-normal text-gray-600 text-sm">{autoRecomendado.version}</span>
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Unidad Homologada y Recomendada</h3>
+                  <h4 className="text-2xl font-extrabold uppercase leading-none mb-2 text-[#006837]">
+                    {autoRecomendado.marca} {autoRecomendado.modelo} <span className="font-normal text-slate-600 text-base">{autoRecomendado.version}</span>
                   </h4>
-                  <p className="text-[10px] text-gray-800 font-medium leading-relaxed italic pr-4 bg-white p-2 rounded border border-gray-100">
-                    "{autoRecomendado.veredicto || "Análisis Técnico Institucional: Vehículo contrastado bajo parámetros de importación oficial frente a las opciones del mercado vigentes."}"
+                  <p className="text-xs text-slate-800 font-medium leading-relaxed italic pr-4 bg-white p-3 rounded-md border border-slate-100">
+                    "{autoRecomendado.veredicto || "Análisis Técnico Cooperativo: Vehículo seleccionado bajo parámetros de importación oficial y respaldo institucional en Paraguay."}"
                   </p>
                 </div>
               </div>
             </section>
 
-            {/* GRILLA COMPRIMIDA PARA A4 - Estilo Sobrio */}
+            {/* GRILLA COMPRIMIDA PARA A4 - Estilo Sobrio Cooperativa */}
             <section className="mb-6">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-950 border-b border-gray-200 pb-1.5 mb-3">Matriz Comparativa Homologada</h3>
-              <table className="w-full text-left border-collapse border border-gray-200">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-950 border-b border-slate-200 pb-2 mb-4">Matriz Comparativa Homologada</h3>
+              <table className="w-full text-left border-collapse border border-slate-200">
                 <thead>
-                  <tr className="bg-gray-100 text-[9px] uppercase tracking-wider text-gray-600 border-b border-gray-200">
-                    <th className="p-2 font-bold border-r border-gray-200 w-1/4">Especificación Homologada</th>
+                  <tr className="bg-slate-100 text-[10px] uppercase tracking-wider text-slate-600 border-b border-slate-200">
+                    <th className="p-2.5 font-bold border-r border-slate-200 w-1/4 bg-slate-100">Especificación Validada</th>
                     {selected.map(auto => (
-                      <th key={auto.id} className="p-2 font-extrabold border-r border-gray-200 text-center text-gray-950 text-[10px]">{auto.marca} {auto.modelo}</th>
+                      <th key={auto.id} className="p-2.5 font-extrabold border-r border-slate-200 text-center text-[#006837] text-[11px] bg-slate-50">{auto.marca} {auto.modelo}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="font-medium text-[10px] text-gray-800">
+                <tbody className="font-medium text-[11px] text-slate-800">
                   {[
-                    { label: 'Precio de Referencia USD', key: 'precioUsd', isPrice: true },
+                    { label: 'Precio Referencial USD', key: 'precioUsd', isPrice: true },
                     { label: 'Denominación Versión', key: 'version' },
                     { label: 'Configuración Motor', key: 'motor' },
                     { label: 'Combustible / Eficiencia', key: 'combustible' },
-                    { label: 'Transmisión', key: 'transmision' },
+                    { label: 'Caja Transmisión', key: 'transmision' },
                     { label: 'Capacidad Carga (Lts)', key: 'bauleraLitros' },
                     { label: 'Garantía Oficial Paraguay', key: 'garantia' },
-                    { label: 'Seguridad Activa (ADAS)', key: 'adas' },
-                    { label: 'País Procedencia Marca', key: 'origenMarca' },
+                    { label: 'Seguridad (ADAS)', key: 'adas' },
+                    { label: 'Origen Marca', key: 'origenMarca' },
                   ].map((item, idx) => (
-                    <tr key={item.key} className="border-b border-gray-200 break-inside-avoid">
-                      <td className="p-1.5 bg-gray-50/50 font-semibold text-[9px] uppercase text-gray-600 border-r border-gray-200">{item.label}</td>
+                    <tr key={item.key} className="border-b border-slate-200 break-inside-avoid">
+                      <td className="p-2 bg-slate-50 font-semibold text-[10px] uppercase text-slate-600 border-r border-slate-200 tracking-wide">{item.label}</td>
                       {selected.map(auto => {
                         const currentAuto = activeVersions[auto.id] || auto;
                         let valor = (currentAuto as any)[item.key];
@@ -460,7 +467,7 @@ export default function WizardContainer() {
                         if (item.isPrice && valor) valor = `$${valor.toLocaleString()}`;
                         
                         return (
-                          <td key={auto.id} className={`p-1.5 border-r border-gray-200 text-center ${item.isPrice ? 'font-extrabold text-[#005c97] text-[11px]' : ''}`}>
+                          <td key={auto.id} className={`p-2 border-r border-slate-200 text-center ${item.isPrice ? 'font-extrabold text-[#006837] text-xs' : ''}`}>
                             {valor || 'A confirmar'}
                           </td>
                         );
@@ -471,22 +478,22 @@ export default function WizardContainer() {
               </table>
             </section>
 
-            {/* OPCIONES EXTRA (Con Badges Técnicos Sobrios) */}
+            {/* OPCIONES EXTRA (Con Badges Técnicos Sobrios Cooperativa) */}
             {opcionesExtra.length > 0 && (
-              <section className="mb-6 break-inside-avoid">
-                <h3 className="text-[9px] font-bold uppercase tracking-wider text-gray-500 mb-2">Otras Unidades del Mercado Oficial que cumplen el perfil:</h3>
-                <div className="grid grid-cols-2 gap-2">
+              <section className="mb-8 break-inside-avoid">
+                <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2.5">Otras Unidades del Mercado Oficial que cumplen el perfil cooperativo:</h3>
+                <div className="grid grid-cols-2 gap-2.5">
                   {opcionesExtra.map(auto => (
-                    <div key={auto.id} className="p-2 border border-gray-200 bg-white flex items-center gap-3 rounded-sm">
-                      <img src={auto.urlImagen} className="w-12 h-9 object-contain" alt={auto.modelo} />
+                    <div key={auto.id} className="p-2.5 border border-slate-200 bg-white flex items-center gap-4 rounded-md">
+                      <img src={auto.urlImagen} className="w-14 h-10 object-contain" alt={auto.modelo} />
                       <div className="flex-1">
-                        <h4 className="font-extrabold text-[10px] uppercase text-gray-950 leading-none">{auto.marca} <span className="font-medium text-[9px] text-gray-600">{auto.modelo}</span></h4>
-                        <p className="text-[10px] font-extrabold text-[#005c97] mt-0.5 mb-1">${auto.precioUsd?.toLocaleString()}</p>
+                        <h4 className="font-extrabold text-[11px] uppercase text-slate-950 leading-none">{auto.marca} <span className="font-medium text-[10px] text-slate-600">{auto.modelo}</span></h4>
+                        <p className="text-[11px] font-extrabold text-[#006837] mt-0.5 mb-1.5">${auto.precioUsd?.toLocaleString()}</p>
                         
                         {/* Píldoras Técnicas Sobrias */}
-                        <div className="flex flex-wrap gap-1">
-                          {auto.motor && <span className="px-1.5 py-0.5 bg-gray-100 text-[7px] font-semibold text-gray-600 uppercase rounded-sm border border-gray-200">{auto.motor.slice(0, 18)}</span>}
-                          {auto.bauleraLitros && <span className="px-1.5 py-0.5 bg-gray-100 text-[7px] font-semibold text-gray-600 uppercase rounded-sm border border-gray-200">{auto.bauleraLitros}L</span>}
+                        <div className="flex flex-wrap gap-1.5">
+                          {auto.motor && <span className="px-2 py-0.5 bg-slate-100 text-[8px] font-semibold text-slate-600 uppercase rounded-sm border border-slate-200">{auto.motor.slice(0, 20)}</span>}
+                          {auto.bauleraLitros && <span className="px-2 py-0.5 bg-slate-100 text-[8px] font-semibold text-slate-600 uppercase rounded-sm border border-slate-200">{auto.bauleraLitros}L</span>}
                         </div>
                       </div>
                     </div>
@@ -495,21 +502,21 @@ export default function WizardContainer() {
               </section>
             )}
 
-            {/* FOOTER CORPORATIVO CADAM */}
-            <footer className="bg-gray-50 p-4 border border-gray-200 rounded break-inside-avoid mt-auto shadow-inner">
-              <div className="flex items-center justify-between gap-4">
-                <div className="max-w-[70%]">
-                  <h3 className="text-xs font-bold uppercase text-gray-950 mb-1 tracking-tight">
-                    Aviso Importante de Homologación
+            {/* FOOTER CORPORATIVO COOPERATIVA UNIVERSITARIA */}
+            <footer className="bg-[#006837] text-white p-6 border-t-8 border-[#FFD100] rounded-lg break-inside-avoid mt-auto shadow-xl">
+              <div className="flex items-center justify-between gap-6">
+                <div className="max-w-[75%]">
+                  <h3 className="text-sm font-extrabold uppercase text-[#FFD100] mb-1.5 tracking-tight">
+                    Respaldo Institucional y Aviso de Homologación
                   </h3>
-                  <p className="text-[9px] text-gray-700 font-medium leading-tight pr-4">
-                    Este informe es referencial y se basa en datos provistos por los importadores oficiales asociados a CADAM a la fecha de generación. Los precios, especificaciones y disponibilidad están sujetos a cambios sin previo aviso por parte de cada concesionaria. Se recomienda validar la información directamente con el representante autorizado antes de concretar una operación.
+                  <p className="text-xs text-white font-medium leading-relaxed pr-4">
+                    Este informe es referencial y se basa en datos provistos por los importadores oficiales asociados a CADAM y validados por la Cooperativa Universitaria a la fecha de generación. Los precios, especificaciones y disponibilidad están sujetos a cambios sin previo aviso por parte de cada concesionaria. Se recomienda validar la información directamente con el representante autorizado antes de concretar una operación de crédito.
                   </p>
                 </div>
-                <div className="text-right border-l border-gray-200 pl-4 flex-shrink-0">
-                  <p className="text-[8px] font-bold uppercase tracking-widest text-gray-500 mb-1">Contacto CADAM</p>
-                  <p className="text-xs font-extrabold text-gray-950 leading-none">(021) 615 151</p>
-                  <p className="text-[9px] font-semibold text-[#005c97] mt-1">cadam.com.py</p>
+                <div className="text-right border-l-2 border-[#FFD100]/50 pl-5 flex-shrink-0">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-[#FFD100] mb-1.5">Contacto CU</p>
+                  <p className="text-sm font-extrabold text-white leading-none">(021) 617 0000</p>
+                  <p className="text-[10px] font-semibold text-white mt-1.5">universitaria.coop</p>
                 </div>
               </div>
             </footer>
@@ -520,62 +527,61 @@ export default function WizardContainer() {
   }
 
   // ============================================================================
-  // FLUJO NORMAL WEB (Step 1 y Step 2) - Estilo CADAM
+  // FLUJO NORMAL WEB (Step 1 y Step 2) - Estilo Cooperativa
   // ============================================================================
   return (
-    <div className={`min-h-screen font-sans ${step === 2 ? 'bg-gray-50' : 'bg-white'}`}>
+    <div className={`min-h-screen font-sans ${step === 2 ? 'bg-slate-50' : 'bg-white'}`}>
       
-      {/* HEADER WEB INSTITUCIONAL */}
-      <div className="max-w-[1600px] mx-auto p-6 md:p-8 flex justify-between items-center border-b border-gray-100 bg-white">
-        <div className="flex items-center gap-3">
-          <div className="bg-[#005c97] text-white font-sans font-extrabold text-2xl px-3 py-1 rounded-sm tracking-tight hover:bg-[#004a7a] transition-colors cursor-pointer">CADAM</div>
+      {/* HEADER WEB INSTITUCIONAL COOPERATIVA */}
+      <div className="max-w-[1600px] mx-auto p-6 md:p-8 flex justify-between items-center border-b border-slate-100 bg-white">
+        <div className="flex items-center gap-4">
+          <div className="bg-[#006837] text-white font-sans font-extrabold text-2xl px-3.5 py-1.5 rounded-full tracking-tight shadow-md hover:bg-[#004a7a] transition-colors cursor-pointer border-2 border-[#FFD100]">CU</div>
           <div className="hidden md:block">
-            <h1 className="text-sm font-extrabold uppercase tracking-tight text-gray-950">Portal de Consultas Técnicas</h1>
-            <p className="text-[10px] font-medium text-gray-500">Impulsando el desarrollo automotor legal y formal en Paraguay</p>
+            <h1 className="text-sm font-extrabold uppercase tracking-tight text-[#006837]">Portal de Consultas y Validación Técnica</h1>
+            <p className="text-[11px] font-medium text-slate-500">Impulsando el desarrollo legal y formal en Paraguay</p>
           </div>
         </div>
-        {step === 2 && <button onClick={() => setStep(1)} className="text-[10px] font-bold uppercase border-b-2 border-[#f1c40f] pb-0.5 text-gray-600 hover:text-[#005c97] transition-colors">← Nueva Consulta</button>}
+        {step === 2 && <button onClick={() => setStep(1)} className="text-[10px] font-bold uppercase border-b-2 border-[#FFD100] pb-1 text-slate-600 hover:text-[#006837] transition-colors">← Nueva Consulta</button>}
       </div>
 
       {step === 1 && (
         <div className="max-w-4xl mx-auto p-6 md:p-10 animate-in fade-in duration-500">
-          <div className="bg-white border border-gray-100 p-8 md:p-12 shadow-xl rounded space-y-10">
+          <div className="bg-white border border-slate-100 p-8 md:p-12 shadow-xl rounded-xl space-y-10">
             
             <div className="text-center max-w-2xl mx-auto">
-                <h2 className="text-2xl font-extrabold text-gray-950 uppercase tracking-tight mb-2">Asistente de Selección de <span className="text-[#005c97]">Vehículos 0km</span></h2>
-                <p className="text-sm text-gray-600 font-medium">Defina sus parámetros de búsqueda. Nuestro sistema analizará las opciones disponibles en el mercado oficial paraguayo de los asociados a CADAM.</p>
+                <h2 className="text-2xl font-extrabold text-[#006837] uppercase tracking-tight mb-2.5">Asistente Cooperativo de Selección de <span className="text-[#006837]">Vehículos 0km</span></h2>
+                <p className="text-sm text-slate-600 font-medium">Defina sus parámetros de búsqueda. Nuestro sistema analizará las opciones homologadas disponibles en el mercado oficial paraguayo asociados a CADAM.</p>
             </div>
 
             {PEDIR_DATOS_USUARIO && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-gray-50 p-6 rounded border border-gray-100 shadow-inner">
-                {/* Campos de usuario se mantienen igual en lógica, solo estética neutra */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 p-6 rounded-lg border border-slate-100 shadow-inner">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase text-gray-500">Nombre Completo *</label>
-                  <input value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} className="w-full p-3 border border-gray-200 bg-white rounded outline-none focus:border-[#005c97] text-sm font-medium" placeholder="Ej: Juan Pérez" />
+                  <label className="text-[10px] font-bold uppercase text-slate-500">Nombre Completo del Socio *</label>
+                  <input value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} className="w-full p-3 border border-slate-200 bg-white rounded-md outline-none focus:border-[#006837] text-sm font-medium shadow-inner" placeholder="Ej: Juan Pérez" />
                 </div>
-                {/* ... celular y email ... */}
+                {/* ... celular y email se mantienen igual en lógica ... */}
               </div>
             )}
 
-            <div className="space-y-10 bg-gray-50/50 p-6 rounded border border-gray-100 shadow-inner">
+            <div className="space-y-10 bg-slate-50/50 p-6 rounded-lg border border-slate-100 shadow-inner">
               <div className="flex justify-between items-center gap-4">
-                <label className="text-[10px] font-bold uppercase text-gray-500 tracking-wide">Rango de Presupuesto Estimado (USD)</label>
-                <div className="flex gap-2 font-extrabold text-[#005c97] text-sm tracking-tight bg-white px-4 py-1.5 rounded-full border border-gray-100 shadow-sm">
+                <label className="text-[10px] font-bold uppercase text-slate-500 tracking-wide">Rango de Inversión Estimada (USD)</label>
+                <div className="flex gap-2 font-extrabold text-[#006837] text-sm tracking-tight bg-white px-4 py-1.5 rounded-full border border-slate-100 shadow-sm">
                   <span>${formData.presupuestoMin.toLocaleString()}</span> — <span>${formData.presupuestoMax.toLocaleString()}</span>
                 </div>
               </div>
-              <div className="relative w-full h-1.5 bg-gray-200 rounded-full">
-                <div className="absolute h-full bg-[#005c97] rounded-full" style={{ left: `${(formData.presupuestoMin / 150000) * 100}%`, right: `${100 - (formData.presupuestoMax / 150000) * 100}%` }} />
-                <input type="range" min="0" max="150000" step="1000" value={formData.presupuestoMin} onChange={handleMinChange} className="absolute w-full -top-1 h-3 appearance-none bg-transparent pointer-events-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-gray-800 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow" />
-                <input type="range" min="0" max="150000" step="1000" value={formData.presupuestoMax} onChange={handleMaxChange} className="absolute w-full -top-1 h-3 appearance-none bg-transparent pointer-events-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-[#005c97] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow" />
+              <div className="relative w-full h-1.5 bg-slate-200 rounded-full">
+                <div className="absolute h-full bg-[#006837] rounded-full" style={{ left: `${(formData.presupuestoMin / 150000) * 100}%`, right: `${100 - (formData.presupuestoMax / 150000) * 100}%` }} />
+                <input type="range" min="0" max="150000" step="1000" value={formData.presupuestoMin} onChange={handleMinChange} className="absolute w-full -top-1 h-3 appearance-none bg-transparent pointer-events-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-slate-800 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow" />
+                <input type="range" min="0" max="150000" step="1000" value={formData.presupuestoMax} onChange={handleMaxChange} className="absolute w-full -top-1 h-3 appearance-none bg-transparent pointer-events-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-[#FFD100] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow" />
               </div>
             </div>
 
             <div className="space-y-4">
-              <label className="text-[10px] font-bold uppercase text-gray-500 tracking-wide">Atributos Prioritarios en su Próxima Unidad (Seleccionar 3) *</label>
+              <label className="text-[10px] font-bold uppercase text-slate-500 tracking-wide">Atributos Prioritarios en su Próxima Unidad (Seleccionar 3) *</label>
               <div className="flex flex-wrap gap-2.5">
                 {['Seguridad', 'Tecnología', 'Espacio', 'Precio', 'Eficiencia'].map(at => (
-                  <button key={at} onClick={() => toggleAtributo(at)} className={`px-6 py-2.5 text-[11px] font-bold border-2 rounded transition-all tracking-wider ${formData.atributos.includes(at) ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-100 hover:border-gray-200 hover:text-gray-700'}`}>{at}</button>
+                  <button key={at} onClick={() => toggleAtributo(at)} className={`px-6 py-2.5 text-[11px] font-bold border-2 rounded-md transition-all tracking-wider ${formData.atributos.includes(at) ? 'bg-[#006837] text-white border-[#006837]' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200 hover:text-slate-700'}`}>{at}</button>
                 ))}
               </div>
             </div>
@@ -588,11 +594,11 @@ export default function WizardContainer() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase text-gray-500">Requerimientos o Notas Adicionales</label>
-              <textarea value={formData.notas} onChange={e => setFormData({...formData, notas: e.target.value})} placeholder="Ej: Uso mayormente urbano, preferencia por buen valor de reventa gremial..." className="w-full p-4 bg-white border border-gray-200 rounded text-sm min-h-[100px] outline-none font-medium focus:border-[#005c97] transition-colors" />
+              <label className="text-[10px] font-bold uppercase text-slate-500">Requerimientos o Notas Adicionales</label>
+              <textarea value={formData.notas} onChange={e => setFormData({...formData, notas: e.target.value})} placeholder="Ej: Uso mayormente urbano, preferencia por buen valor de reventa gremial..." className="w-full p-4 bg-white border border-slate-200 rounded-md text-sm min-h-[100px] outline-none font-medium focus:border-[#006837] transition-colors shadow-inner" />
             </div>
 
-            <button disabled={!isReady} onClick={handleExecute} className="w-full py-5 bg-[#005c97] text-white font-extrabold text-xs uppercase tracking-[3px] hover:bg-[#004a7a] transition-all disabled:opacity-30 shadow-lg rounded">Iniciar Análisis Técnico de Mercado →</button>
+            <button disabled={!isReady} onClick={handleExecute} className="w-full py-5 bg-[#006837] text-white font-extrabold text-xs uppercase tracking-[3px] hover:bg-[#004a7a] transition-all disabled:opacity-30 shadow-lg rounded-md border-b-4 border-[#FFD100]">Iniciar Análisis Técnico de Mercado →</button>
           </div>
         </div>
       )}
@@ -600,11 +606,12 @@ export default function WizardContainer() {
       {step === 2 && (
         <div className="max-w-[1700px] mx-auto p-4 md:p-8 pb-40 animate-in fade-in duration-700 space-y-10">
           
-          <div className="bg-gray-950 p-8 md:p-10 text-white rounded shadow-2xl border-l-8 border-[#005c97]">
-            <h2 className="font-extrabold text-xl uppercase tracking-tight">
-              Análisis de Mercado Oficial para Perfil: {formData.atributos.join(' + ')}.
+          <div className="bg-[#006837] p-8 md:p-10 text-white rounded-lg shadow-2xl border-l-8 border-[#FFD100]">
+            <h2 className="font-extrabold text-xl uppercase tracking-tight flex items-center gap-3">
+              <div className="text-white text-3xl font-black">CU</div>
+              Análisis de Mercado Homologado para Perfil: {formData.atributos.join(' + ')}.
             </h2>
-            <p className="mt-2.5 text-gray-300 font-medium text-xs uppercase tracking-wider underline decoration-[#f1c40f] underline-offset-4">
+            <p className="mt-3 text-[#FFD100] font-medium text-xs uppercase tracking-wider underline decoration-white/50 underline-offset-4">
               Inversión Referencial: ${formData.presupuestoMin.toLocaleString()} – ${formData.presupuestoMax.toLocaleString()} | 
               Origen: {formData.origen.length > 0 ? formData.origen.join(', ') : 'Todos'} | 
               Motor: {formData.motorizacion.length > 0 ? formData.motorizacion.join(', ') : 'Cualquiera'}
@@ -612,14 +619,14 @@ export default function WizardContainer() {
           </div>
 
           {esRescate && (
-            <div className="w-full bg-[#f1c40f]/10 border-l-4 border-[#f1c40f] p-5 rounded-r shadow-sm">
-              <h3 className="text-gray-900 font-bold text-sm uppercase tracking-wide">⚠️ Aviso de Disponibilidad Específica</h3>
-              <p className="text-gray-800 text-xs mt-1 font-medium">La configuración exacta solicitada presenta baja disponibilidad. Le sugerimos estas alternativas viables dentro del mercado oficial asociados a CADAM según su rango de inversión y carrocería:</p>
+            <div className="w-full bg-[#FFD100]/10 border-l-4 border-[#FFD100] p-5 rounded-r shadow-sm">
+              <h3 className="text-gray-900 font-bold text-sm uppercase tracking-wide">⚠️ Aviso de Disponibilidad Homologada</h3>
+              <p className="text-gray-800 text-xs mt-1 font-medium">La configuración exacta solicitada presenta baja disponibilidad en el mercado oficial asociados a CADAM. Le sugerimos estas alternativas viables dentro de su rango de inversión y carrocería:</p>
             </div>
           )}
 
-          <div className="relative z-30 bg-white p-4 rounded border border-gray-100 shadow-sm">
-            <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">
+          <div className="relative z-30 bg-white p-4 rounded-lg border border-slate-100 shadow-sm">
+            <label className="text-[10px] font-bold uppercase text-slate-500 mb-1.5 block tracking-wide">
               ¿Desea contrastar un modelo específico? Búsquelo en el catálogo homologado y agréguelo:
             </label>
             <input
@@ -627,12 +634,12 @@ export default function WizardContainer() {
               placeholder="Ej: Toyota Corolla, Kia Sportage, Hyundai HB20..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full p-3.5 border border-gray-200 bg-white outline-none focus:border-[#005c97] text-sm font-semibold text-gray-950 transition-colors shadow-inner rounded"
+              className="w-full p-3.5 border border-slate-200 bg-white outline-none focus:border-[#006837] text-sm font-semibold text-gray-950 transition-colors shadow-inner rounded-md"
             />
             {searchTerm.length >= 2 && (
-              <div className="absolute top-full left-0 w-full bg-white border border-gray-200 shadow-2xl mt-1 max-h-60 overflow-y-auto z-50 rounded-b">
+              <div className="absolute top-full left-0 w-full bg-white border border-slate-200 shadow-2xl mt-1 max-h-60 overflow-y-auto z-50 rounded-b-md animate-in fade-in duration-150">
                 {isSearching ? (
-                  <div className="p-4 text-xs font-semibold text-gray-500 uppercase text-center animate-pulse">Consultando registro central de unidades...</div>
+                  <div className="p-4 text-xs font-semibold text-slate-500 uppercase text-center animate-pulse">Consultando registro central de unidades...</div>
                 ) : searchResults.length > 0 ? (
                   searchResults.map(auto => (
                     <div 
@@ -649,70 +656,70 @@ export default function WizardContainer() {
                         setSearchTerm('');
                         setSearchResults([]);
                       }}
-                      className="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer flex justify-between items-center transition-colors"
+                      className="p-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer flex justify-between items-center transition-colors"
                     >
                       <div>
                         <span className="font-bold text-gray-950 uppercase text-xs">{auto.marca} {auto.modelo}</span>
-                        <span className="text-[10px] text-gray-500 ml-2 font-medium tracking-wide">{auto.version}</span>
+                        <span className="text-[10px] text-slate-500 ml-2 font-medium tracking-wide">{auto.version}</span>
                       </div>
-                      <span className="text-[#005c97] font-extrabold text-xs">${auto.precioUsd?.toLocaleString()}</span>
+                      <span className="text-[#006837] font-extrabold text-xs">${auto.precioUsd?.toLocaleString()}</span>
                     </div>
                   ))
                 ) : (
-                  <div className="p-4 text-xs font-semibold text-gray-500 uppercase text-center">No se encontraron registros homologados para "{searchTerm}"</div>
+                  <div className="p-4 text-xs font-semibold text-slate-500 uppercase text-center">No se encontraron registros homologados para "{searchTerm}"</div>
                 )}
               </div>
             )}
           </div>
 
-          {/* Grilla de Resultados - Diseño Comprimido */}
+          {/* Grilla de Resultados - Diseño Comprimido Cooperativa */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {displayedAutos.map((auto, idx) => {
               const currentAuto = activeVersions[auto.id] || auto;
               return (
-                <div key={auto.id} className={`bg-white border rounded transition-all relative ${compareIds.includes(auto.id) ? 'border-[#005c97] ring-2 ring-[#005c97]/15' : 'border-gray-100 shadow-sm hover:border-gray-200'}`}>
+                <div key={auto.id} className={`bg-white border rounded-lg transition-all relative ${compareIds.includes(auto.id) ? 'border-[#006837] ring-2 ring-[#006837]/15' : 'border-slate-100 shadow-sm hover:border-slate-200'}`}>
                   
-                  {/* Badge de Puesto Institucional */}
+                  {/* Badge de Puesto Institucional - Pin Cooperativo */}
                   {auto.puesto ? (
-                    <div className="absolute -top-2.5 -left-2.5 w-8 h-8 bg-gray-950 text-white flex items-center justify-center font-extrabold z-10 shadow-lg rounded-full text-xs border-2 border-white">{auto.puesto}</div>
+                    <div className="absolute -top-2.5 -left-2.5 w-8 h-8 rounded-full bg-[#FFD100] text-[#006837] flex items-center justify-center font-extrabold z-10 shadow-lg text-xs border-2 border-white">{auto.puesto}</div>
                   ) : (
-                    <div className="absolute -top-2.5 -left-2.5 w-8 h-8 bg-[#005c97] text-white flex items-center justify-center font-extrabold z-10 shadow-lg rounded-full text-sm border-2 border-white">+</div>
+                    <div className="absolute -top-2.5 -left-2.5 w-8 h-8 rounded-full bg-[#006837] text-white flex items-center justify-center font-extrabold z-10 shadow-lg text-sm border-2 border-white">+</div>
                   )}
 
                   {/* Imagen y Botón Comparar - Altura Reducida */}
-                  <div className="relative h-44 bg-gray-50 overflow-hidden border-b border-gray-100 rounded-t">
-                    <img src={currentAuto.urlImagen} className="w-full h-full object-contain p-2" alt={currentAuto.modelo} />
-                    <button onClick={() => toggleCompare(auto.id)} className={`absolute top-2 right-2 px-2.5 py-1 text-[9px] font-bold border rounded-sm transition-colors ${compareIds.includes(auto.id) ? 'bg-[#005c97] text-white border-[#005c97]' : 'bg-white/90 text-gray-600 border-gray-200 hover:text-gray-900 hover:border-gray-300'}`}>
+                  <div className="relative h-44 bg-slate-50 overflow-hidden border-b border-slate-100 rounded-t-lg p-2">
+                    <img src={currentAuto.urlImagen} className="w-full h-full object-contain mx-auto" alt={currentAuto.modelo} />
+                    <button onClick={() => toggleCompare(auto.id)} className={`absolute top-2 right-2 px-2.5 py-1 text-[9px] font-bold border rounded-sm transition-colors ${compareIds.includes(auto.id) ? 'bg-[#FFD100] text-[#006837] border-[#FFD100]' : 'bg-white/90 text-slate-600 border-slate-200 hover:text-gray-900 hover:border-gray-300'}`}>
                       {compareIds.includes(auto.id) ? '✓ SELECCIONADO' : '+ COMPARAR'}
                     </button>
                   </div>
 
                   {/* Veredicto Institucional - Más Pequeño */}
-                  <div className="px-5 -mt-4 mb-1.5 relative z-10">
-                    <div className="bg-white border border-gray-100 border-l-2 border-l-[#005c97] p-2 rounded-sm shadow">
-                      <p className="text-[10px] leading-relaxed text-gray-800 italic font-medium">
-                        <span className="font-extrabold text-gray-950 not-italic text-[9px] uppercase mr-1.5 inline-block">Análisis CADAM:</span>
-                        "{currentAuto.veredicto || (auto.puesto ? "Procesando veredicto técnico final..." : "Unidad agregada manualmente. Solicite veredicto a un asociado.")}"
+                  <div className="px-5 -mt-4 mb-2 relative z-10">
+                    <div className="bg-white border border-slate-100 border-l-2 border-l-[#006837] p-2 rounded-sm shadow">
+                      <p className="text-[10px] leading-relaxed text-slate-800 italic font-medium">
+                        <span className="font-extrabold text-[#006837] not-italic text-[9px] uppercase mr-1 inline-block bg-slate-100 px-1.5 py-0.5 rounded-sm">Veredicto Cooperativo:</span>
+                        "{currentAuto.veredicto || (auto.puesto ? "Procesando veredicto técnico institucional..." : "Unidad agregada manualmente. Solicite veredicto a su Cooperativa.")}"
                       </p>
                     </div>
                   </div>
                   
                   {/* Datos del Auto - Paddings Comprimidos */}
                   <div className="p-5 pt-2 flex-1 flex flex-col gap-4">
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       <h4 className="font-extrabold text-base text-gray-950 uppercase leading-tight truncate">{currentAuto.marca} {currentAuto.modelo}</h4>
                       
                       {/* Selector de Versión Institucional */}
                       <div className="relative group">
-                        <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mb-0.5">Versión Homologada:</p>
-                        <div className="bg-white border border-gray-200 rounded-sm p-2 text-[10px] font-semibold text-gray-900 flex justify-between items-center cursor-pointer hover:border-gray-300 transition-colors">
+                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wide mb-0.5">Versión Homologada:</p>
+                        <div className="bg-white border border-slate-200 rounded p-2 text-[10px] font-semibold text-gray-900 flex justify-between items-center cursor-pointer hover:border-slate-300 transition-colors">
                           <span className="truncate pr-1.5">{currentAuto.version}</span>
-                          <span className="text-gray-400 group-hover:text-gray-600">▾</span>
+                          <span className="text-slate-400 group-hover:text-slate-600">▾</span>
                         </div>
-                        {/* Dropdown se mantiene igual en lógica */}
-                        <div className="absolute left-0 w-full bg-white border border-gray-200 shadow-2xl z-20 hidden group-hover:block max-h-36 overflow-y-auto rounded-b-sm animate-in fade-in duration-150">
+                        {/* Dropdown se mantiene igual en lógica, estética neutra */}
+                        <div className="absolute left-0 w-full bg-white border border-slate-200 shadow-2xl z-20 hidden group-hover:block max-h-36 overflow-y-auto rounded-b-md animate-in fade-in duration-150">
                           {auto.versiones?.map((v: any) => (
-                            <div key={v.id} onClick={() => setActiveVersions({ ...activeVersions, [auto.id]: v })} className={`p-2 text-[9px] border-b border-gray-100 hover:bg-gray-50 cursor-pointer flex justify-between ${currentAuto.id === v.id ? 'bg-[#005c97]/5 text-[#005c97]' : 'text-gray-700'}`}>
+                            <div key={v.id} onClick={() => setActiveVersions({ ...activeVersions, [auto.id]: v })} className={`p-2 text-[9px] border-b border-slate-100 hover:bg-slate-50 cursor-pointer flex justify-between ${currentAuto.id === v.id ? 'bg-[#006837]/5 text-[#006837]' : 'text-slate-700'}`}>
                               <span className="font-bold uppercase pr-2">{v.version}</span>
                               <span className="font-extrabold whitespace-nowrap">${v.precioUsd?.toLocaleString()}</span>
                             </div>
@@ -721,66 +728,68 @@ export default function WizardContainer() {
                       </div>
                     </div>
 
-                    <div className="flex justify-between border-y border-gray-100 py-2.5 text-xs font-bold uppercase tracking-wide">
-                      <span className="text-gray-500 font-semibold text-[10px]">{currentAuto.match_percent ? `${currentAuto.match_percent}% Afinidad` : 'Referencia'}</span>
-                      <span className="text-gray-950 font-extrabold">${currentAuto.precioUsd?.toLocaleString()}</span>
+                    <div className="flex justify-between border-y border-slate-100 py-3 text-xs font-bold uppercase tracking-wide">
+                      <span className="text-slate-500 font-semibold text-[10px]">{currentAuto.match_percent ? `${currentAuto.match_percent}% Afinidad` : 'Referencia'}</span>
+                      <span className="text-[#006837] font-extrabold">${currentAuto.precioUsd?.toLocaleString()}</span>
                     </div>
                     
-                    <button onClick={() => setExpandedId(expandedId === auto.id ? null : auto.id)} className="text-[10px] font-bold text-[#005c97] text-left uppercase tracking-wider hover:text-[#004a7a] transition-colors">+ Ficha Técnica Resumida</button>
+                    <button onClick={() => setExpandedId(expandedId === auto.id ? null : auto.id)} className="text-[10px] font-bold text-[#006837] text-left uppercase tracking-wider hover:text-[#004a7a] transition-colors">+ Ficha Técnica Resumida</button>
                     
                     {expandedId === auto.id && (
-                      <div className="text-[10px] space-y-2.5 text-gray-700 animate-in slide-in-from-top-1 duration-200 pt-1 font-medium bg-gray-50/50 p-3 rounded border border-gray-100 shadow-inner">
-                        {/* Datos técnicos se mantienen, estética neutra */}
+                      <div className="text-[10px] space-y-2.5 text-gray-700 animate-in slide-in-from-top-1 duration-200 pt-1 font-medium bg-slate-50 p-3 rounded-md border border-slate-100 shadow-inner">
+                        {/* Datos técnicos se mantienen igual, estética neutra */}
                         <div className="space-y-1">
-                          <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Paquete de Seguridad</p>
-                          <p className="flex justify-between border-b border-gray-100 pb-1"><span>ADAS:</span> <span className="font-semibold text-gray-950">{currentAuto.adas || 'Estándar Oficial'}</span></p>
+                          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Paquete de Seguridad</p>
+                          <p className="flex justify-between border-b border-slate-100 pb-1"><span>ADAS:</span> <span className="font-semibold text-gray-950">{currentAuto.adas || 'Estándar Oficial'}</span></p>
                           {/* ... airbags ... */}
                         </div>
                         {/* ... tecnología, capacidad ... */}
                       </div>
                     )}
-                    <a href={`https://wa.me/595991244469?text=Me interesa recibir una propuesta comercial formal para el ${currentAuto.marca} ${currentAuto.modelo} versión ${currentAuto.version} validado en el portal CADAM.`} target="_blank" className="mt-auto block w-full py-3 bg-[#005c97] text-white text-center font-bold text-[10px] uppercase tracking-widest hover:bg-[#004a7a] transition-colors shadow rounded-sm">Solicitar Propuesta Formal</a>
+                    <a href={`https://wa.me/595216170000?text=Solicito propuesta comercial formal para el ${currentAuto.marca} ${currentAuto.modelo} versión ${currentAuto.version} validado por la Cooperativa Universitaria.`} target="_blank" className="mt-auto block w-full py-3 bg-[#006837] text-white text-center font-bold text-[10px] uppercase tracking-widest hover:bg-[#004a7a] transition-colors shadow rounded-md border-b-4 border-[#FFD100]">Solicitar Propuesta Formal</a>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Información Institucional sobre Financiación */}
-          <div className="mt-16 border-t border-gray-200 pt-10 break-inside-avoid">
-            <div className="bg-white border border-gray-100 text-gray-950 p-8 md:p-12 rounded shadow-sm relative">
-              <h2 className="text-2xl font-extrabold uppercase tracking-tight mb-2">
-                Asistencia de <span className="text-[#005c97]">Financiación Automotor</span>
+          {/* Información Institucional sobre Financiación - Estilo Cooperativa */}
+          <div className="mt-16 border-t border-slate-200 pt-10 break-inside-avoid">
+            <div className="bg-white border border-slate-100 text-gray-950 p-8 md:p-12 rounded-lg shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-[#006837]/5 -translate-y-16 translate-x-16"></div>
+              <h2 className="text-2xl font-extrabold uppercase tracking-tight mb-2.5 flex items-center gap-2.5">
+                <div className="text-[#006837] text-3xl font-black">CU</div>
+                Respaldo de <span className="text-[#006837]">Financiación Cooperativa</span>
               </h2>
-              <p className="text-gray-700 text-sm mb-8 font-medium max-w-3xl leading-relaxed">
-                CADAM promueve el acceso a la unidad 0km a través de canales formales. Le resumimos los requisitos generales del sistema financiero paraguayo para facilitar su gestión de crédito con las concesionarias asociadas o entidades bancarias.
+              <p className="text-slate-700 text-sm mb-8 font-medium max-w-3xl leading-relaxed">
+                Su Cooperativa promueve el acceso a la unidad 0km a través de canales formales y homologados. Le resumimos los requisitos generales sugeridos para facilitar su gestión de crédito con las concesionarias asociadas o su sucursal de referencia de la Cooperativa Universitaria.
               </p>
 
               <div className="space-y-4 max-w-5xl">
-                <details className="group bg-gray-50 border border-gray-100 p-5 rounded cursor-pointer hover:border-gray-200 transition-colors shadow-inner">
+                <details className="group bg-slate-50 border border-slate-100 p-5 rounded-md cursor-pointer hover:border-slate-200 transition-colors shadow-inner">
                   <summary className="font-bold text-xs uppercase tracking-wider text-gray-950 flex justify-between items-center list-none outline-none">
-                    Financiación Directa con la Concesionaria (Plan CADAM Asociados)
-                    <span className="text-[#005c97] group-open:rotate-180 transition-transform">▼</span>
+                    Financiación Directa (Plan Gremial CADAM Asociados)
+                    <span className="text-[#006837] group-open:rotate-180 transition-transform">▼</span>
                   </summary>
-                  <div className="mt-5 text-gray-800 text-xs leading-relaxed space-y-2 border-t border-gray-100 pt-4 font-medium">
-                    {/* Lista de requisitos neutra */}
+                  <div className="mt-5 text-gray-800 text-xs leading-relaxed space-y-2 border-t border-slate-100 pt-4 font-medium">
+                    {/* Lista de requisitos neutra institucional */}
                   </div>
                 </details>
-                {/* ... detalles préstamos bancarios ... */}
+                {/* ... detalles préstamos bancarios se mantienen igual en lógica, estética neutra ... */}
               </div>
             </div>
           </div>
           
-          {/* Barra Flotante Comparar - Estilo Institucional */}
+          {/* Barra Flotante Comparar - Estilo Institucional Cooperativa */}
           {compareIds.length >= 1 && (
-            <div className="fixed bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[95%] md:w-auto bg-gray-950 text-white p-4 md:px-8 md:py-5 shadow-2xl flex items-center justify-between md:justify-center md:gap-8 border-t-2 border-[#005c97] rounded-sm animate-in slide-in-from-bottom-10 print:hidden">
-              <div className="text-xs font-bold uppercase tracking-wider">{compareIds.length} <span className="text-gray-400 font-medium">Unidades en selección</span></div>
+            <div className="fixed bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[95%] md:w-auto bg-[#006837] text-white p-4 md:px-8 md:py-5 shadow-2xl flex items-center justify-between md:justify-center md:gap-8 border-t-2 border-[#FFD100] rounded-lg animate-in slide-in-from-bottom-10 print:hidden">
+              <div className="text-xs font-bold uppercase tracking-wider">{compareIds.length} <span className="text-slate-200 font-medium tracking-normal">unidades en selección</span></div>
               {compareIds.length >= 2 ? (
-                <button onClick={handleOpenComparison} className="bg-[#005c97] text-white px-8 py-3 font-extrabold text-[11px] uppercase tracking-widest hover:bg-[#004a7a] transition-all shadow rounded-sm">Visualizar Matriz Técnica</button>
+                <button onClick={handleOpenComparison} className="bg-white text-[#006837] px-8 py-3 font-extrabold text-[11px] uppercase tracking-widest hover:bg-slate-100 transition-all shadow rounded-md border border-slate-100">Visualizar Matriz Técnica</button>
               ) : (
-                <p className="text-[10px] text-gray-500 italic tracking-wider px-3">Seleccione al menos 2 unidades...</p>
+                <p className="text-[10px] text-slate-400 italic tracking-wider px-3">Seleccione al menos 2 unidades...</p>
               )}
-              <button onClick={() => setCompareIds([])} className="text-gray-400 text-[10px] uppercase font-bold hover:text-white transition-colors tracking-wide">Limpiar</button>
+              <button onClick={() => setCompareIds([])} className="text-slate-300 text-[10px] uppercase font-bold hover:text-white transition-colors tracking-wide">Limpiar</button>
             </div>
           )}
         </div>
